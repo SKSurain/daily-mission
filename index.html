@@ -51,11 +51,16 @@
 
   .task { display:flex; align-items:center; gap:12px; padding:12px 6px; border-radius:12px; cursor:pointer; }
   .task:active { background:rgba(255,255,255,0.06); }
+  .task.sub { padding:8px 6px 8px 34px; }
   .checkbox { min-width:28px; height:28px; border-radius:8px; border:2px solid #6b7280; display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; transition:all .2s; }
+  .checkbox.small { min-width:22px; height:22px; font-size:12px; border-radius:6px; }
   .checkbox.checked { background:#10b981; border-color:#10b981; }
+  .checkbox.half { border-color:#10b981; color:#10b981; }
   .task-label { flex:1; font-size:14.5px; line-height:1.35; }
+  .task.sub .task-label { font-size:13.5px; opacity:0.9; }
   .task.done .task-label { text-decoration:line-through; opacity:0.5; }
   .task-points { font-size:12px; font-weight:800; color:#a78bfa; min-width:30px; text-align:right; }
+  .bonus-chip { font-size:11px; font-weight:900; color:#fbbf24; }
 
   .cat-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
   .cat-counter { font-size:13px; font-weight:700; background:rgba(255,255,255,0.08); padding:3px 10px; border-radius:999px; }
@@ -82,7 +87,7 @@
   .pop { animation:popIn .45s ease; }
 
   .hidden { display:none !important; }
-  .banner { background:#7c2d12; border-radius:14px; padding:12px; font-size:13px; margin-bottom:14px; }
+  .update-banner { background:#1d4ed8; border-radius:14px; padding:12px; font-size:13px; margin-bottom:14px; font-weight:700; }
 
   @keyframes popIn { 0%{transform:scale(.7);opacity:0} 70%{transform:scale(1.05)} 100%{transform:scale(1);opacity:1} }
   @keyframes wiggle { 0%,100%{transform:rotate(0) scale(1)} 25%{transform:rotate(-2deg) scale(1.03)} 75%{transform:rotate(2deg) scale(1.03)} }
@@ -97,25 +102,26 @@
     <div class="savebadge" id="saveBadge"></div>
   </div>
 
-  <!-- ============ TODAY: DUMP ============ -->
+  <!-- ============ TODAY: DUMP / UPDATE ============ -->
   <div id="view-dump">
+    <div class="update-banner hidden" id="updateBanner">🔄 Updating today's mission — paste the full updated list from your Claude Project. Your ticks and earned rewards are kept.</div>
     <div class="card">
-      <div class="card-title">🌅 Paste Your Day</div>
-      <div class="muted">Paste the organized list from your Claude Project (or type your own: headings = categories, * bullets = tasks, add Bonus and Rewards sections). Deadline tasks are auto-marked urgent.</div>
+      <div class="card-title" id="dumpTitle">🌅 Paste Your Day</div>
+      <div class="muted">Paste the organized list from your Claude Project. Headings = categories, * bullets = tasks with [weight], indented - lines = subtasks, [x] = already completed, "before 4:30 PM" in the text = +3 bonus if you beat it.</div>
       <textarea id="dumpInput" placeholder="Tech Club
 * [9] Send all Tech Club details to management before 4:30 PM
-* [7] Write Lorila meeting notes
-
-Social Media
-* [8] Record first 5 short videos
+* [7] Record protein drink video
+  - Take pictures of each drink
+  - Taste test and rank them
+  - Record speaking video
 
 Bonus
 * Record room rental video
 
 Rewards
-* Lotus snacks up to RM20
-* Buy something on Shopee"></textarea>
-      <button class="big-btn" onclick="organize()">🚀 Organize My Day</button>
+* Lotus snacks up to RM20"></textarea>
+      <button class="big-btn" id="organizeBtn" onclick="organize()">🚀 Organize My Day</button>
+      <button class="big-btn grey hidden" id="cancelUpdateBtn" style="margin-top:8px" onclick="cancelUpdate()">← Back to tracker</button>
     </div>
     <div class="card" id="carryCard"></div>
   </div>
@@ -153,7 +159,7 @@ Rewards
       <div id="bonusList"></div>
     </div>
     <div class="card" id="vaultCard"></div>
-    <div class="card" id="bankAddCard"></div>
+    <button class="big-btn" style="margin-bottom:8px" onclick="startUpdate()">🔄 Update Day (paste new list)</button>
     <button class="big-btn red" onclick="askEndDay()">🌙 End Day / Start Fresh</button>
   </div>
 
@@ -214,7 +220,7 @@ Rewards
   <div class="modal">
     <div style="font-size:15px;margin-bottom:16px">End today's mission? Unfinished tasks move to your Task Bank, and today is saved to Stats.</div>
     <div style="display:flex;gap:10px">
-      <button class="small-btn grey" style="flex:1;background:#374151" onclick="hideEnd()">Cancel</button>
+      <button class="small-btn" style="flex:1;background:#374151" onclick="hideEnd()">Cancel</button>
       <button class="small-btn" style="flex:1;background:#ef4444" onclick="endDay()">End Day</button>
     </div>
   </div>
@@ -226,18 +232,22 @@ Rewards
 <script>
 /* ================= STATE ================= */
 const KEY = "dmos-v1";
+const BONUS_PTS = 3;
 const PALETTE = ["#f472b6","#60a5fa","#34d399","#a78bfa","#fbbf24","#fb923c","#22d3ee","#e879f9"];
 const uid = () => Math.random().toString(36).slice(2,10);
 const todayStr = () => new Date().toISOString().slice(0,10);
+const nowMin = () => { const d=new Date(); return d.getHours()*60+d.getMinutes(); };
 
 let state = { taskBank: [], rewardBank: [], today: null, history: [] };
 let review = null;
-let tab = "today";
+let updateMode = false;
 
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) state = Object.assign({ taskBank:[], rewardBank:[], today:null, history:[] }, JSON.parse(raw));
+    /* migrate v1 tasks without subs */
+    if(state.today && state.today.tasks) state.today.tasks.forEach(t=>{ if(!t.subs) t.subs=[]; });
     setBadge("");
   } catch(e) { setBadge("⚠ storage unavailable"); }
 }
@@ -253,67 +263,151 @@ function catColor(cat){
 }
 
 /* ================= PARSER ================= */
+function parseDeadline(s){
+  const m = s.match(/(?:before|by)\s+(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)?/i);
+  if(!m) return null;
+  let h = +m[1], min = +(m[2]||0);
+  const ap = (m[3]||"").toLowerCase();
+  if(ap==="pm" && h<12) h+=12;
+  if(ap==="am" && h===12) h=0;
+  if(!ap && h<=7) h+=12; /* bare "by 2" assumed afternoon */
+  return h*60+min;
+}
+function stripMarkers(s){
+  /* strips leading [8] weight and/or [x] done markers in any order */
+  let weight=null, done=false, changed=true;
+  while(changed){
+    changed=false;
+    let m = s.match(/^[\[\(]\s*w?(\d{1,2})\s*[\]\)]\s*/i);
+    if(m){ weight=Math.min(10,parseInt(m[1])); s=s.slice(m[0].length); changed=true; continue; }
+    m = s.match(/^(\[\s*(x|✓|✔|done)\s*\]|✅)\s*/i);
+    if(m){ done=true; s=s.slice(m[0].length); changed=true; }
+  }
+  return { label:s.trim(), weight, done };
+}
 function parseDump(text){
-  const lines = text.split(/\n/).map(l=>l.trim()).filter(Boolean);
+  const rawLines = text.split(/\n/);
   const tasks=[], bonus=[], rewards=[];
   let section="Other", mode="tasks", orderIdx=0;
-  const isBullet = l => /^[-*•·]\s*/.test(l);
-  const urgentRe = /\b\d{1,2}(:\d{2})?\s?(am|pm)\b|deadline|before\s/i;
-  for(const raw of lines){
-    let clean = raw.replace(/^[-*•·]\s*/,"").trim();
-    if(!isBullet(raw)){
-      const low = raw.toLowerCase().replace(/[:：#]/g,"").trim();
+  const bulletRe = /^[-*•·]\s*/;
+  const urgentRe = /\b\d{1,2}([:.]\d{2})?\s?(am|pm)\b|deadline|before\s/i;
+  for(const rawLine of rawLines){
+    if(!rawLine.trim()) continue;
+    const trimmed = rawLine.trim();
+    const isB = bulletRe.test(trimmed);
+    const indented = /^\s/.test(rawLine) && isB;
+    if(!isB){
+      const low = trimmed.toLowerCase().replace(/[:：#]/g,"").trim();
       if(/^bonus/.test(low)){ mode="bonus"; continue; }
       if(/^rewards?\b/.test(low)){ mode="rewards"; continue; }
       if(/^goals?\b/.test(low)){ mode="goal"; continue; }
       if(/^tasks?\b/.test(low)){ mode="tasks"; section="Other"; continue; }
-      if(mode==="goal" && raw.length>=40){
-        tasks.push({id:uid(),label:clean,category:"Priority",weight:10,urgent:true,done:false}); continue;
+      if(mode==="goal" && trimmed.length>=40){
+        const sm = stripMarkers(trimmed);
+        tasks.push({id:uid(),label:sm.label,category:"Priority",weight:10,urgent:true,done:sm.done,deadlineMin:parseDeadline(sm.label),bonusEarned:false,subs:[]});
+        continue;
       }
-      if((mode==="tasks"||mode==="goal") && raw.length<40){
-        mode="tasks"; section=raw.replace(/[:：#]/g,"").trim(); continue;
+      if((mode==="tasks"||mode==="goal") && trimmed.length<40){
+        mode="tasks"; section=trimmed.replace(/[:：#]/g,"").trim(); continue;
       }
-      if(mode==="tasks" && raw.length>=40){
-        const u=urgentRe.test(clean);
-        tasks.push({id:uid(),label:clean,category:section,weight:u?8:5,urgent:u,done:false});
+      if(mode==="tasks" && trimmed.length>=40){
+        const sm = stripMarkers(trimmed);
+        const u = urgentRe.test(sm.label);
+        tasks.push({id:uid(),label:sm.label,category:section,weight:sm.weight||(u?8:5),urgent:u,done:sm.done,deadlineMin:parseDeadline(sm.label),bonusEarned:false,subs:[]});
       }
       continue;
     }
-    if(mode==="rewards"){ if(clean) rewards.push(clean); continue; }
-    if(mode==="bonus"){ if(clean) bonus.push({id:uid(),label:clean,done:false}); continue; }
-    /* optional [8] or (8) weight prefix from the Claude Project output */
-    let weight = null;
-    const wm = clean.match(/^[\[\(]\s*w?(\d{1,2})\s*[\]\)]\s*/i);
-    if(wm){ weight = Math.min(10, parseInt(wm[1])); clean = clean.replace(wm[0],"").trim(); }
-    const urgent = urgentRe.test(clean);
-    if(weight===null){ weight = Math.max(3, 9 - Math.floor(orderIdx/3)); if(urgent) weight = Math.max(weight,8); }
-    tasks.push({ id:uid(), label:clean, category: mode==="goal"?"Priority":section, weight, urgent, done:false });
+    const sm = stripMarkers(trimmed.replace(bulletRe,"").trim());
+    if(!sm.label) continue;
+    if(mode==="rewards"){ rewards.push(sm.label); continue; }
+    if(mode==="bonus"){ bonus.push({id:uid(),label:sm.label,done:sm.done}); continue; }
+    /* subtask: indented bullet under the previous task */
+    if(indented && tasks.length){
+      tasks[tasks.length-1].subs.push({id:uid(),label:sm.label,done:sm.done});
+      continue;
+    }
+    const urgent = urgentRe.test(sm.label);
+    let weight = sm.weight;
+    if(weight===null){ weight = Math.max(3, 9 - Math.floor(orderIdx/3)); if(urgent) weight=Math.max(weight,8); }
+    tasks.push({ id:uid(), label:sm.label, category: mode==="goal"?"Priority":section, weight, urgent, done:sm.done, deadlineMin:parseDeadline(sm.label), bonusEarned:false, subs:[] });
     orderIdx++;
   }
+  /* if a parent has subs, its done state derives from subs; a [x] parent marks all subs done */
+  tasks.forEach(t=>{
+    if(t.subs.length){
+      if(t.done) t.subs.forEach(s=>s.done=true);
+      t.done = t.subs.every(s=>s.done);
+    }
+  });
   return {tasks, bonus, rewards};
 }
 
-/* largest-remainder rounding: points always total exactly 100 */
+/* largest-remainder rounding helper */
+function distribute(total, weights){
+  const totalW = weights.reduce((s,w)=>s+w,0) || 1;
+  const raw = weights.map(w=>w/totalW*total);
+  const floors = raw.map(Math.floor);
+  let rem = total - floors.reduce((s,f)=>s+f,0);
+  const order = raw.map((r,i)=>({i,frac:r-Math.floor(r)})).sort((a,b)=>b.frac-a.frac);
+  const out=[...floors];
+  for(let k=0;k<rem;k++) out[order[k%order.length].i]+=1;
+  return out;
+}
 function assignPoints(tasks){
   if(!tasks.length) return tasks;
-  const totalW = tasks.reduce((s,t)=>s+(t.weight||1),0);
-  const raw = tasks.map(t=>((t.weight||1)/totalW)*100);
-  const floors = raw.map(Math.floor);
-  let rem = 100 - floors.reduce((s,f)=>s+f,0);
-  const order = raw.map((r,i)=>({i,frac:r-Math.floor(r)})).sort((a,b)=>b.frac-a.frac);
-  const pts=[...floors];
-  for(let k=0;k<rem;k++) pts[order[k%order.length].i]+=1;
-  tasks.forEach((t,i)=>t.points=pts[i]);
+  const pts = distribute(100, tasks.map(t=>t.weight||1));
+  tasks.forEach((t,i)=>{
+    t.points = pts[i];
+    if(t.subs.length){
+      const sp = distribute(t.points, t.subs.map(()=>1));
+      t.subs.forEach((s,j)=>s.pts=sp[j]);
+    }
+  });
   return tasks;
 }
 
-/* ================= FLOW: ORGANIZE / REVIEW ================= */
+/* ================= SCORING ================= */
+function fullyDone(t){ return t.subs.length ? t.subs.every(s=>s.done) : t.done; }
+function earnedPts(t){
+  let p = t.subs.length ? t.subs.reduce((s,x)=>s+(x.done?x.pts:0),0) : (t.done?t.points:0);
+  if(fullyDone(t) && t.bonusEarned) p += BONUS_PTS;
+  return p;
+}
+function points(){ return state.today.tasks.reduce((s,t)=>s+earnedPts(t),0); }
+function claimsTotal(){ const t=state.today; return (t.earned75?1:0)+(t.earned90?1:0)+(t.bonusEarnedCount||0); }
+function claimsAvail(){ return claimsTotal() - (state.today.claimed||[]).length; }
+function refreshRatchets(){
+  const p=points();
+  if(p>=75) state.today.earned75=true;
+  if(p>=90) state.today.earned90=true;
+}
+function updateDeadlineBonus(t){
+  if(fullyDone(t)){
+    if(t.deadlineMin!=null && !t.bonusEarned && nowMin()<=t.deadlineMin) t.bonusEarned=true;
+  } else {
+    t.bonusEarned=false;
+  }
+}
+
+/* ================= FLOW: ORGANIZE / REVIEW / UPDATE ================= */
+function similar(a,b){
+  a=a.toLowerCase().replace(/[^a-z0-9 ]/g,""); b=b.toLowerCase().replace(/[^a-z0-9 ]/g,"");
+  if(a===b) return true;
+  const wa=new Set(a.split(" ").filter(w=>w.length>3)), wb=new Set(b.split(" ").filter(w=>w.length>3));
+  if(!wa.size||!wb.size) return false;
+  let common=0; wa.forEach(w=>{if(wb.has(w))common++;});
+  return common/Math.min(wa.size,wb.size) >= 0.7;
+}
 function organize(){
   const text = document.getElementById("dumpInput").value;
   if(!text.trim()) return;
   const parsed = parseDump(text);
+  if(!parsed.tasks.length) return;
   parsed.tasks.sort((a,b)=>(b.urgent?1:0)-(a.urgent?1:0) || b.weight-a.weight);
-  /* duplicate detection vs task bank */
+  if(updateMode && state.today){
+    applyUpdate(parsed);
+    return;
+  }
   const dups=[];
   parsed.tasks.forEach(t=>{
     const hit = state.taskBank.find(b=>similar(b.label,t.label));
@@ -323,16 +417,63 @@ function organize(){
   renderReview();
   show("review");
 }
-function similar(a,b){
-  a=a.toLowerCase().replace(/[^a-z0-9 ]/g,""); b=b.toLowerCase().replace(/[^a-z0-9 ]/g,"");
-  if(a===b) return true;
-  const wa=new Set(a.split(" ").filter(w=>w.length>3)), wb=new Set(b.split(" ").filter(w=>w.length>3));
-  if(!wa.size||!wb.size) return false;
-  let common=0; wa.forEach(w=>{if(wb.has(w))common++;});
-  return common/Math.min(wa.size,wb.size) >= 0.7;
+function applyUpdate(parsed){
+  const old = state.today;
+  /* carry over ticks + earned bonuses from the current day by matching labels */
+  parsed.tasks.forEach(nt=>{
+    const ot = old.tasks.find(o=>similar(o.label,nt.label));
+    if(ot){
+      if(nt.subs.length){
+        nt.subs.forEach(ns=>{
+          const os=(ot.subs||[]).find(o=>similar(o.label,ns.label));
+          if(os && os.done) ns.done=true;
+        });
+        if(!ot.subs.length && ot.done) nt.subs.forEach(s=>s.done=true);
+        nt.done = nt.subs.every(s=>s.done);
+      } else if(!nt.done && fullyDone(ot)){
+        nt.done=true;
+      }
+      nt.bonusEarned = ot.bonusEarned || false;
+    }
+  });
+  parsed.bonus.forEach(nb=>{
+    const ob = old.bonus.find(o=>similar(o.label,nb.label));
+    if(ob && ob.done) nb.done=true;
+  });
+  assignPoints(parsed.tasks);
+  parsed.rewards.forEach(r=>{
+    if(!state.rewardBank.some(x=>x.label.toLowerCase()===r.toLowerCase()))
+      state.rewardBank.push({id:uid(),label:r});
+  });
+  state.today.tasks = parsed.tasks;
+  state.today.bonus = parsed.bonus;
+  const doneB = parsed.bonus.filter(b=>b.done).length;
+  state.today.bonusEarnedCount = Math.max(state.today.bonusEarnedCount||0, doneB);
+  refreshRatchets();
+  updateMode=false;
+  document.getElementById("dumpInput").value="";
+  save(); renderTracker(); show("tracker");
+}
+function startUpdate(){
+  updateMode=true;
+  document.getElementById("updateBanner").classList.remove("hidden");
+  document.getElementById("cancelUpdateBtn").classList.remove("hidden");
+  document.getElementById("dumpTitle").textContent="🔄 Update Today's Mission";
+  document.getElementById("organizeBtn").textContent="🔄 Update My Day";
+  show("dump");
+}
+function cancelUpdate(){
+  updateMode=false;
+  resetDumpUI();
+  show("tracker");
+}
+function resetDumpUI(){
+  document.getElementById("updateBanner").classList.add("hidden");
+  document.getElementById("cancelUpdateBtn").classList.add("hidden");
+  document.getElementById("dumpTitle").textContent="🌅 Paste Your Day";
+  document.getElementById("organizeBtn").textContent="🚀 Organize My Day";
 }
 function renderReview(){
-  /* duplicates */
   const dupBox=document.getElementById("dupBox");
   dupBox.innerHTML = review.dups.map((d,i)=>`
     <div class="card" style="border:1px solid #f59e0b">
@@ -342,23 +483,20 @@ function renderReview(){
         <button class="small-btn" style="background:#374151" onclick="keepDup(${i})">Keep both</button>
       </div>
     </div>`).join("");
-  /* ranked tasks */
   assignPoints(review.tasks);
   document.getElementById("reviewList").innerHTML = review.tasks.map((t,i)=>`
     <div class="row">
       <div class="rank" style="background:${catColor(t.category)}">${i+1}</div>
-      <div style="flex:1"><div style="font-size:14px">${t.urgent?"⏰ ":""}${esc(t.label)}</div>
-      <div style="font-size:11px;opacity:.55">${esc(t.category)}</div></div>
+      <div style="flex:1"><div style="font-size:14px">${t.urgent?"⏰ ":""}${esc(t.label)}${t.deadlineMin!=null?' <span class="bonus-chip">⚡+3</span>':''}</div>
+      <div style="font-size:11px;opacity:.55">${esc(t.category)}${t.subs.length?` · ${t.subs.length} subtasks`:""}</div>
+      ${t.subs.map(s=>`<div style="font-size:12px;opacity:.7;padding-left:10px">− ${esc(s.label)}</div>`).join("")}</div>
       <div style="font-size:13px;font-weight:800;color:#a78bfa">+${t.points}</div>
       <button class="x-btn" onclick="removeReviewTask('${t.id}')">✕</button>
     </div>`).join("");
-  /* bonus */
   toggleEl("reviewBonusCard", review.bonus.length>0);
   document.getElementById("reviewBonus").innerHTML = review.bonus.map(b=>`<div style="font-size:14px;padding:4px 0">• ${esc(b.label)}</div>`).join("");
-  /* rewards */
   toggleEl("reviewRewardsCard", review.rewards.length>0);
   document.getElementById("reviewRewards").innerHTML = review.rewards.map(r=>`<div style="font-size:14px;padding:4px 0">• ${esc(r)}</div>`).join("");
-  /* suggestions */
   const usedBank = new Set(review.tasks.map(t=>t.fromBank).filter(Boolean));
   const sugg = state.taskBank.filter(b=>!usedBank.has(b.id));
   toggleEl("suggestCard", sugg.length>0);
@@ -369,15 +507,13 @@ function renderReview(){
 function mergeDup(i){
   const d=review.dups[i];
   state.taskBank = state.taskBank.filter(b=>b.id!==d.bankId);
-  save();
-  review.dups.splice(i,1);
-  renderReview();
+  save(); review.dups.splice(i,1); renderReview();
 }
 function keepDup(i){ review.dups.splice(i,1); renderReview(); }
 function removeReviewTask(id){ review.tasks=review.tasks.filter(t=>t.id!==id); renderReview(); }
 function addSuggestion(bankId){
   const b=state.taskBank.find(x=>x.id===bankId); if(!b) return;
-  review.tasks.push({id:uid(),label:b.label,category:b.category||"Other",weight:5,urgent:false,done:false,fromBank:b.id});
+  review.tasks.push({id:uid(),label:b.label,category:b.category||"Other",weight:5,urgent:false,done:false,deadlineMin:parseDeadline(b.label),bonusEarned:false,subs:[],fromBank:b.id});
   renderReview();
 }
 function backToDump(){ review=null; show("dump"); }
@@ -386,18 +522,17 @@ function startDay(){
   if(!review || !review.tasks.length) return;
   review.tasks.sort((a,b)=>(b.urgent?1:0)-(a.urgent?1:0) || b.weight-a.weight);
   assignPoints(review.tasks);
-  /* move rewards into bank (skip dupes) */
   review.rewards.forEach(r=>{
     if(!state.rewardBank.some(x=>x.label.toLowerCase()===r.toLowerCase()))
       state.rewardBank.push({id:uid(),label:r});
   });
-  /* remove used bank tasks */
   const used = new Set(review.tasks.map(t=>t.fromBank).filter(Boolean));
   state.taskBank = state.taskBank.filter(b=>!used.has(b.id));
   state.today = {
     date: todayStr(), tasks: review.tasks, bonus: review.bonus,
-    earned75:false, earned90:false, bonusEarnedCount:0, claimed:[]
+    earned75:false, earned90:false, bonusEarnedCount: review.bonus.filter(b=>b.done).length, claimed:[]
   };
+  refreshRatchets();
   review=null;
   document.getElementById("dumpInput").value="";
   save(); renderTracker(); show("tracker");
@@ -406,10 +541,24 @@ function startDay(){
 /* ================= TRACKER ================= */
 function toggleTask(id){
   const t=state.today.tasks.find(x=>x.id===id); if(!t) return;
-  t.done=!t.done;
-  const p=points();
-  if(p>=75) state.today.earned75=true;
-  if(p>=90) state.today.earned90=true;
+  if(t.subs.length){
+    const target = !t.subs.every(s=>s.done);
+    t.subs.forEach(s=>s.done=target);
+    t.done = target;
+  } else {
+    t.done=!t.done;
+  }
+  updateDeadlineBonus(t);
+  refreshRatchets();
+  save(); renderTracker();
+}
+function toggleSub(pid,sid){
+  const t=state.today.tasks.find(x=>x.id===pid); if(!t) return;
+  const s=t.subs.find(x=>x.id===sid); if(!s) return;
+  s.done=!s.done;
+  t.done=t.subs.every(x=>x.done);
+  updateDeadlineBonus(t);
+  refreshRatchets();
   save(); renderTracker();
 }
 function toggleBonus(id){
@@ -419,37 +568,35 @@ function toggleBonus(id){
   state.today.bonusEarnedCount=Math.max(state.today.bonusEarnedCount||0,doneB);
   save(); renderTracker();
 }
-function points(){ return state.today.tasks.reduce((s,t)=>s+(t.done?t.points:0),0); }
-function claimsTotal(){ const t=state.today; return (t.earned75?1:0)+(t.earned90?1:0)+(t.bonusEarnedCount||0); }
-function claimsAvail(){ return claimsTotal() - (state.today.claimed||[]).length; }
-
 function renderTracker(){
   const t=state.today; if(!t) return;
   const p=points(), pct=Math.round(p);
   document.getElementById("dPoints").textContent=`${p} / 100`;
   document.getElementById("dPct").textContent=pct+"%";
-  document.getElementById("dTasks").textContent=`${t.tasks.filter(x=>x.done).length} / ${t.tasks.length}`;
+  const totalTasks=t.tasks.length, doneTasks=t.tasks.filter(fullyDone).length;
+  document.getElementById("dTasks").textContent=`${doneTasks} / ${totalTasks}`;
   const ca=claimsAvail(), ct=claimsTotal();
   document.getElementById("dReward").textContent = ca>0?`🎁 ${ca}`:(ct>0?`✓ ${ct}`:"🔒");
-  document.getElementById("pBar").style.width=pct+"%";
+  document.getElementById("pBar").style.width=Math.min(100,pct)+"%";
   document.getElementById("pTxt").textContent=pct+"%";
   document.getElementById("milestone").textContent =
     pct>=100?"🏆 MAIN MISSION COMPLETE": pct>=75?"🎁 Reward Zone": pct>=50?"🔥 Halfway There": pct>=25?"💪 Building Momentum":"🚩 Getting Started";
-  /* categories */
   const cats=[...new Set(t.tasks.map(x=>x.category))];
   document.getElementById("catList").innerHTML = cats.map(cat=>{
     const ts=t.tasks.filter(x=>x.category===cat);
-    const cp=ts.reduce((s,x)=>s+x.points,0), cd=ts.reduce((s,x)=>s+(x.done?x.points:0),0);
+    const cp=ts.reduce((s,x)=>s+x.points,0), cd=ts.reduce((s,x)=>s+earnedPts(x),0);
     return `<div class="card">
       <div class="cat-header"><div style="font-weight:800;font-size:15px">${esc(cat)}</div><div class="cat-counter">${cd} / ${cp}</div></div>
-      <div class="cat-bar-wrap"><div class="cat-bar" style="background:${catColor(cat)};width:${cp?cd/cp*100:0}%"></div></div>
-      ${ts.map(x=>taskRow(x,false)).join("")}
+      <div class="cat-bar-wrap"><div class="cat-bar" style="background:${catColor(cat)};width:${cp?Math.min(100,cd/cp*100):0}%"></div></div>
+      ${ts.map(x=>taskBlock(x)).join("")}
     </div>`;
   }).join("");
-  /* bonus */
   toggleEl("bonusCard", t.bonus.length>0);
-  document.getElementById("bonusList").innerHTML = t.bonus.map(b=>taskRow(b,true)).join("");
-  /* vault */
+  document.getElementById("bonusList").innerHTML = t.bonus.map(b=>`
+    <div class="task ${b.done?"done":""}" onclick="toggleBonus('${b.id}')">
+      <div class="checkbox ${b.done?"checked":""}">${b.done?"✓":""}</div>
+      <div class="task-label">${esc(b.label)}</div>
+    </div>`).join("");
   const v=document.getElementById("vaultCard");
   const claimedHtml=(t.claimed||[]).map(c=>`<div style="font-size:14px;font-weight:700;padding:6px;border-radius:10px;background:rgba(0,0,0,0.15);margin-bottom:6px">✅ ${esc(c.label)}</div>`).join("");
   if(ca>0){
@@ -462,28 +609,22 @@ function renderTracker(){
     v.innerHTML=`<div style="font-weight:900;font-size:15px;margin-bottom:6px">🔒 REWARD VAULT</div>
       <div style="font-size:12.5px;opacity:.85;margin-bottom:${claimedHtml?"10px":"0"}">75% = 1 claim · 90% = +1 · each bonus = +1</div>${claimedHtml}`;
   }
-  /* add from bank */
-  const bc=document.getElementById("bankAddCard");
-  if(state.taskBank.length){
-    bc.classList.remove("hidden");
-    bc.innerHTML=`<div class="card-title">📥 Add from Task Bank</div>`+state.taskBank.map(b=>`
-      <div class="row"><div style="flex:1;font-size:14px">${esc(b.label)}</div>
-      <button class="plus-btn" onclick="addBankToToday('${b.id}')">+</button></div>`).join("");
-  } else bc.classList.add("hidden");
 }
-function taskRow(x,isBonus){
-  return `<div class="task ${x.done?"done":""}" onclick="${isBonus?"toggleBonus":"toggleTask"}('${x.id}')">
-    <div class="checkbox ${x.done?"checked":""}">${x.done?"✓":""}</div>
-    <div class="task-label">${x.urgent?"⏰ ":""}${esc(x.label)}</div>
-    ${isBonus?"":`<div class="task-points">+${x.points}</div>`}
+function taskBlock(x){
+  const fd=fullyDone(x);
+  const someDone = x.subs.length && x.subs.some(s=>s.done) && !fd;
+  let html = `<div class="task ${fd?"done":""}" onclick="toggleTask('${x.id}')">
+    <div class="checkbox ${fd?"checked":""} ${someDone?"half":""}">${fd?"✓":(someDone?"−":"")}</div>
+    <div class="task-label">${x.urgent?"⏰ ":""}${esc(x.label)}${x.deadlineMin!=null?` <span class="bonus-chip">${x.bonusEarned?"⚡+3 earned!":"⚡+3 if on time"}</span>`:""}</div>
+    <div class="task-points">+${x.points}${fd&&x.bonusEarned?`<span class="bonus-chip">+${BONUS_PTS}</span>`:""}</div>
   </div>`;
-}
-function addBankToToday(bankId){
-  const b=state.taskBank.find(x=>x.id===bankId); if(!b) return;
-  state.taskBank=state.taskBank.filter(x=>x.id!==bankId);
-  state.today.tasks.push({id:uid(),label:b.label,category:b.category||"Other",weight:5,urgent:false,done:false});
-  assignPoints(state.today.tasks);
-  save(); renderTracker();
+  html += x.subs.map(s=>`
+    <div class="task sub ${s.done?"done":""}" onclick="event.stopPropagation();toggleSub('${x.id}','${s.id}')">
+      <div class="checkbox small ${s.done?"checked":""}">${s.done?"✓":""}</div>
+      <div class="task-label">${esc(s.label)}</div>
+      <div class="task-points">+${s.pts}</div>
+    </div>`).join("");
+  return html;
 }
 function claim(){
   if(claimsAvail()<=0) return;
@@ -526,15 +667,18 @@ function hideCelebrate(){ document.getElementById("celebrateOverlay").classList.
 function askEndDay(){ document.getElementById("endOverlay").classList.add("show"); }
 function hideEnd(){ document.getElementById("endOverlay").classList.remove("show"); }
 function endDay(){
-  const t=state.today;
+  archiveDay();
+  save(); hideEnd(); resetDumpUI(); show("dump"); renderAll();
+}
+function archiveDay(){
+  const t=state.today; if(!t) return;
   const p=points();
-  t.tasks.filter(x=>!x.done).forEach(x=>{
+  t.tasks.filter(x=>!fullyDone(x)).forEach(x=>{
     if(!state.taskBank.some(b=>b.label.toLowerCase()===x.label.toLowerCase()))
       state.taskBank.push({id:uid(),label:x.label,category:x.category});
   });
-  state.history.push({date:t.date,percent:Math.round(p),done:t.tasks.filter(x=>x.done).length,total:t.tasks.length,claimed:(t.claimed||[]).map(c=>c.label)});
+  state.history.push({date:t.date,percent:Math.round(p),done:t.tasks.filter(fullyDone).length,total:t.tasks.length,claimed:(t.claimed||[]).map(c=>c.label)});
   state.today=null;
-  save(); hideEnd(); show("dump"); renderAll();
 }
 
 /* ================= BANKS ================= */
@@ -573,7 +717,9 @@ function restoreBackup(){
     const parsed=JSON.parse(document.getElementById("backupBox").value);
     if(!parsed||typeof parsed!=="object"||!("taskBank" in parsed)) throw 0;
     state=Object.assign({taskBank:[],rewardBank:[],today:null,history:[]},parsed);
-    save(); renderAll(); msg.textContent="✓ Restored!";
+    if(state.today && state.today.tasks) state.today.tasks.forEach(t=>{ if(!t.subs) t.subs=[]; });
+    save(); renderAll(); setTab("today");
+    msg.textContent="✓ Restored!";
     document.getElementById("backupBox").value="";
   }catch(e){ msg.textContent="That code doesn't look right — paste the full backup."; }
 }
@@ -589,10 +735,10 @@ function renderStats(){
   for(let i=h.length-1;i>=0;i--){ if(h[i].percent>=75) streak++; else break; }
   document.getElementById("sStreak").textContent=streak+" 🔥";
   const last=h.slice(-14);
-  document.getElementById("chart").innerHTML = last.length ? 
+  document.getElementById("chart").innerHTML = last.length ?
     `<div style="display:flex;align-items:flex-end;gap:4px;height:110px">`+
     last.map(x=>`<div style="flex:1;text-align:center">
-      <div style="height:${Math.max(4,x.percent)}px;max-height:100px;background:${x.percent>=75?"linear-gradient(180deg,#34d399,#10b981)":"#4b5563"};border-radius:4px"></div>
+      <div style="height:${Math.max(4,Math.min(100,x.percent))}px;background:${x.percent>=75?"linear-gradient(180deg,#34d399,#10b981)":"#4b5563"};border-radius:4px"></div>
       <div style="font-size:8px;opacity:.5;margin-top:2px">${x.date.slice(8)}</div></div>`).join("")+`</div>`
     : `<div class="muted">Finish your first day to see history here.</div>`;
   document.getElementById("histList").innerHTML=[...h].reverse().map(x=>`
@@ -607,7 +753,6 @@ function show(which){
   ["dump","review","tracker"].forEach(v=>toggleEl("view-"+v, v===which));
 }
 function setTab(t){
-  tab=t;
   ["today","banks","stats"].forEach(x=>{
     document.getElementById("nav-"+x).classList.toggle("active",x===t);
     if(x!=="today") toggleEl("view-"+x, x===t);
@@ -638,15 +783,8 @@ function renderAll(){
 
 /* ================= INIT ================= */
 load();
-/* auto-end yesterday if a previous day is still open */
 if(state.today && state.today.date !== todayStr() && state.today.tasks.length){
-  const t=state.today, p=t.tasks.reduce((s,x)=>s+(x.done?x.points:0),0);
-  t.tasks.filter(x=>!x.done).forEach(x=>{
-    if(!state.taskBank.some(b=>b.label.toLowerCase()===x.label.toLowerCase()))
-      state.taskBank.push({id:uid(),label:x.label,category:x.category});
-  });
-  state.history.push({date:t.date,percent:Math.round(p),done:t.tasks.filter(x=>x.done).length,total:t.tasks.length,claimed:(t.claimed||[]).map(c=>c.label)});
-  state.today=null;
+  archiveDay();
   save();
 }
 renderAll();
