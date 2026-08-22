@@ -159,6 +159,7 @@ Rewards
       <div id="bonusList"></div>
     </div>
     <div class="card" id="vaultCard"></div>
+    <button class="big-btn green" style="margin-bottom:8px" onclick="copyStatus()">📤 Copy Status for AI</button>
     <button class="big-btn" style="margin-bottom:8px" onclick="startUpdate()">🔄 Update Day (paste new list)</button>
     <button class="big-btn red" onclick="askEndDay()">🌙 End Day / Start Fresh</button>
   </div>
@@ -218,7 +219,8 @@ Rewards
 <!-- MODALS -->
 <div class="overlay" id="endOverlay">
   <div class="modal">
-    <div style="font-size:15px;margin-bottom:16px">End today's mission? Unfinished tasks move to your Task Bank, and today is saved to Stats.</div>
+    <div style="font-size:15px;margin-bottom:10px">End today's mission? Unfinished tasks move to your Task Bank, and today is saved to Stats.</div>
+    <div style="font-size:13px;opacity:.7;margin-bottom:16px">Just changing today's tasks? Cancel and use 🔄 Update Day instead — it keeps your ticks and doesn't touch Stats.</div>
     <div style="display:flex;gap:10px">
       <button class="small-btn" style="flex:1;background:#374151" onclick="hideEnd()">Cancel</button>
       <button class="small-btn" style="flex:1;background:#ef4444" onclick="endDay()">End Day</button>
@@ -664,6 +666,25 @@ function showCelebrate(html){
 }
 function hideCelebrate(){ document.getElementById("celebrateOverlay").classList.remove("show"); }
 
+function copyStatus(){
+  const t=state.today; if(!t) return;
+  const done=t.tasks.filter(fullyDone), not=t.tasks.filter(x=>!fullyDone(x));
+  let out=`Daily Mission status — ${t.date}\n\nDONE:\n`;
+  out+= done.length? done.map(x=>`* ${x.label}`).join("\n")+"\n" : "(none)\n";
+  out+=`\nNOT DONE (carry forward — keep exact wording):\n`;
+  out+= not.length? not.map(x=>`* ${x.label}`+ (x.subs.length? "\n"+x.subs.map(s=>`  - ${s.done?"[x] ":""}${s.label}`).join("\n"):"" )).join("\n")+"\n" : "(none)\n";
+  if(t.bonus.length){
+    out+=`\nBONUS:\n`+t.bonus.map(b=>`* ${b.done?"[x] ":""}${b.label}`).join("\n")+"\n";
+  }
+  out+=`\nPlease build tomorrow's list: keep the exact wording of carried-forward tasks, add my new tasks, re-rank and re-weight everything.`;
+  navigator.clipboard.writeText(out).then(()=>{
+    showCelebrate(`<div style="font-size:40px">📤</div><div style="font-weight:900;font-size:18px;margin:8px 0">Status copied!</div>
+      <div style="font-size:14px;opacity:.8">Paste it into your Claude Project with tomorrow's new tasks, then paste the reply back here.</div>`);
+  }).catch(()=>{
+    showCelebrate(`<div style="font-weight:900;font-size:16px;margin-bottom:8px">📤 Your status — tap, Select All, Copy:</div>
+      <textarea readonly style="min-height:180px;font-size:12px">${esc(out)}</textarea>`);
+  });
+}
 function askEndDay(){ document.getElementById("endOverlay").classList.add("show"); }
 function hideEnd(){ document.getElementById("endOverlay").classList.remove("show"); }
 function endDay(){
@@ -741,10 +762,12 @@ function renderStats(){
       <div style="height:${Math.max(4,Math.min(100,x.percent))}px;background:${x.percent>=75?"linear-gradient(180deg,#34d399,#10b981)":"#4b5563"};border-radius:4px"></div>
       <div style="font-size:8px;opacity:.5;margin-top:2px">${x.date.slice(8)}</div></div>`).join("")+`</div>`
     : `<div class="muted">Finish your first day to see history here.</div>`;
-  document.getElementById("histList").innerHTML=[...h].reverse().map(x=>`
+  document.getElementById("histList").innerHTML=[...h].map((x,i)=>({x,i})).reverse().map(({x,i})=>`
     <div class="row" style="font-size:13px"><div style="flex:1"><b>${x.date}</b> — ${x.done}/${x.total} tasks${x.claimed.length?` <span style="opacity:.7">· 🎁 ${esc(x.claimed.join(", "))}</span>`:""}</div>
-    <div style="font-weight:800;color:${x.percent>=75?"#34d399":"#f5f5f7"}">${x.percent}%</div></div>`).join("")||`<div class="muted">No days finished yet.</div>`;
+    <div style="font-weight:800;color:${x.percent>=75?"#34d399":"#f5f5f7"}">${x.percent}%</div>
+    <button class="x-btn" onclick="delHist(${i})">✕</button></div>`).join("")||`<div class="muted">No days finished yet.</div>`;
 }
+function delHist(i){ state.history.splice(i,1); save(); renderStats(); }
 
 /* ================= VIEW MGMT ================= */
 function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
