@@ -98,7 +98,7 @@
 <body>
 <div class="container">
   <div class="header">
-    <div class="title">⚡ Daily Mission OS</div>
+    <div class="title">⚡ Daily Mission OS <span style="font-size:10px;opacity:.4;font-weight:400">v3</span></div>
     <div class="savebadge" id="saveBadge"></div>
   </div>
 
@@ -288,7 +288,7 @@ function stripMarkers(s){
   return { label:s.trim(), weight, done };
 }
 function parseDump(text){
-  const rawLines = text.split(/\n/);
+  const rawLines = text.split(/\n/).filter(l => !/^\s*```/.test(l));
   const tasks=[], bonus=[], rewards=[];
   let section="Other", mode="tasks", orderIdx=0;
   const bulletRe = /^[-*•·]\s*/;
