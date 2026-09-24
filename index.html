@@ -94,12 +94,16 @@
   @keyframes fall { 0%{transform:translateY(-10vh) rotate(0);opacity:1} 100%{transform:translateY(110vh) rotate(720deg);opacity:.7} }
   .confetti { position:fixed; top:-20px; border-radius:3px; animation:fall linear infinite; z-index:100; pointer-events:none; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div class="container">
   <div class="header">
-    <div class="title">⚡ Daily Mission OS <span style="font-size:10px;opacity:.4;font-weight:400">v3</span></div>
-    <div class="savebadge" id="saveBadge"></div>
+    <div class="title">⚡ Daily Mission OS <span style="font-size:10px;opacity:.4;font-weight:400">v5</span></div>
+    <div style="text-align:right">
+      <div class="savebadge" id="saveBadge"></div>
+      <div id="cloudBadge" style="font-size:10px;font-weight:700;margin-top:2px"></div>
+    </div>
   </div>
 
   <!-- ============ TODAY: DUMP / UPDATE ============ -->
@@ -184,6 +188,7 @@ Rewards
         <button class="plus-btn" onclick="addBankTask()">+</button>
       </div>
     </div>
+    <div class="card" id="cloudCard"></div>
     <div class="card">
       <div class="card-title">💾 Backup & Restore</div>
       <div class="muted">Extra safety: copy this code to Notes sometimes. Paste + Restore on any device to move your data.</div>
@@ -240,6 +245,100 @@ const uid = () => Math.random().toString(36).slice(2,10);
 const todayStr = () => new Date().toISOString().slice(0,10);
 const nowMin = () => { const d=new Date(); return d.getHours()*60+d.getMinutes(); };
 
+/* ================= CLOUD SYNC (Supabase) =================
+   Fill in your own project's URL + anon key below, then create the table with:
+
+   create table app_state (
+     id text primary key,
+     data jsonb not null,
+     updated_at timestamptz default now()
+   );
+   alter table app_state enable row level security;
+   create policy "anon read/write own row" on app_state
+     for all using (true) with check (true);
+
+   The anon key is meant to be public in client code — Supabase's own docs use it
+   this way. The row id below is your private "password": anyone would need to
+   guess it to read or write your row, so keep it non-obvious if you like.
+*/
+const SUPABASE_URL = "https://pxszcfhyhhgsidscjerv.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_xy914dsa0CnEGDHdpXrYBA_nNQGyGpL";
+const ROW_ID = "surain-daily-mission-os";
+const TABLE = "app_state";
+const SYNC_KEY = "dmos-last-cloud-sync";
+
+let supabaseClient = null;
+let cloudReady = false;
+let cloudTimer = null;
+let curTab = "today";
+
+function markSynced(){ try{ localStorage.setItem(SYNC_KEY, String(Date.now())); }catch(e){} renderHeaderCloud(); }
+function renderHeaderCloud(){
+  const el = document.getElementById("cloudBadge");
+  if(!el) return;
+  if(!cloudReady){ el.textContent = "📴 local only"; el.style.color = "#6b7280"; return; }
+  const s = lastSyncText();
+  if(s.days >= 5){ el.textContent = "☁️⚠️ "+s.text; el.style.color = "#fbbf24"; }
+  else { el.textContent = "☁️ "+s.text; el.style.color = "#34d399"; }
+}
+function lastSyncText(){
+  const raw = localStorage.getItem(SYNC_KEY);
+  if(!raw) return { text: "never", days: 999 };
+  const ms = Date.now() - Number(raw);
+  const days = ms / 86400000;
+  let text;
+  if(ms < 60000) text = "just now";
+  else if(ms < 3600000) text = Math.round(ms/60000) + " min ago";
+  else if(days < 1) text = Math.round(ms/3600000) + " hr ago";
+  else text = Math.round(days) + " day" + (Math.round(days)===1?"":"s") + " ago";
+  return { text, days };
+}
+function initCloudClient(){
+  if(SUPABASE_URL.startsWith("PASTE_") || SUPABASE_ANON_KEY.startsWith("PASTE_")) return;
+  if(typeof supabase === "undefined") return; /* CDN script blocked or offline on first load */
+  try{ supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); cloudReady = true; }
+  catch(e){ cloudReady = false; }
+}
+function scheduleCloudSync(){
+  if(!cloudReady){ setTimeout(()=>setBadge(""),1000); return; }
+  clearTimeout(cloudTimer);
+  setBadge("☁️ Saving…");
+  cloudTimer = setTimeout(pushToCloud, 700);
+}
+async function pushToCloud(){
+  try{
+    const { error } = await supabaseClient.from(TABLE).upsert({ id: ROW_ID, data: state, updated_at: new Date().toISOString() });
+    if(error) throw error;
+    setBadge("☁️ Synced");
+    markSynced();
+  }catch(e){
+    setBadge("⚠ Cloud sync failed (saved locally)");
+  }
+  setTimeout(()=>setBadge(""),1500);
+}
+async function pullFromCloud(){
+  if(!cloudReady) return;
+  try{
+    const { data, error } = await supabaseClient.from(TABLE).select("data").eq("id", ROW_ID).maybeSingle();
+    if(error) throw error;
+    markSynced();
+    if(data && data.data){
+      const cloud = data.data;
+      const localTs = state.updatedAt || 0, cloudTs = cloud.updatedAt || 0;
+      if(cloudTs > localTs){
+        state = Object.assign({ taskBank:[], rewardBank:[], today:null, history:[] }, cloud);
+        if(state.today && state.today.tasks) state.today.tasks.forEach(t=>{ if(!t.subs) t.subs=[]; });
+        localStorage.setItem(KEY, JSON.stringify(state));
+        renderAll(); setTab(curTab);
+        setBadge("☁️ Synced from another device");
+        setTimeout(()=>setBadge(""),1800);
+        return;
+      }
+    }
+    if(state.updatedAt) pushToCloud(); /* no cloud row yet, or local is newer: push it up */
+  }catch(e){ /* offline or not configured yet — keep working from local storage */ }
+}
+
 let state = { taskBank: [], rewardBank: [], today: null, history: [] };
 let review = null;
 let updateMode = false;
@@ -254,8 +353,10 @@ function load() {
   } catch(e) { setBadge("⚠ storage unavailable"); }
 }
 function save() {
-  try { localStorage.setItem(KEY, JSON.stringify(state)); setBadge("✓ Saved"); setTimeout(()=>setBadge(""),1200); }
+  state.updatedAt = Date.now();
+  try { localStorage.setItem(KEY, JSON.stringify(state)); setBadge("✓ Saved"); }
   catch(e) { setBadge("⚠ Save failed"); }
+  scheduleCloudSync();
 }
 function setBadge(t){ document.getElementById("saveBadge").textContent = t || todayStr(); }
 
@@ -703,7 +804,23 @@ function archiveDay(){
 }
 
 /* ================= BANKS ================= */
+function renderCloudCard(){
+  const c=document.getElementById("cloudCard");
+  if(!c) return;
+  if(cloudReady){
+    const s = lastSyncText();
+    const warn = s.days >= 5
+      ? `<div style="font-size:12.5px;color:#fbbf24;font-weight:700;margin-top:8px">⚠️ Supabase's free tier pauses a project after ~7 days with no activity. It's been ${s.text} since last sync — open your Supabase dashboard to wake it if needed.</div>`
+      : "";
+    c.innerHTML = `<div class="card-title">☁️ Cloud Sync — Connected</div>
+      <div class="muted">Last synced: ${s.text}. Syncs automatically and pulls the latest whenever you reopen the app on any device.</div>${warn}`;
+  } else {
+    c.innerHTML = `<div class="card-title">☁️ Cloud Sync — Not set up</div>
+      <div class="muted">You're on local-only storage (this device/browser only). Ask Claude for the Supabase setup steps, then paste your Project URL and anon key into the SUPABASE_URL / SUPABASE_ANON_KEY constants near the top of index.html and re-upload.</div>`;
+  }
+}
 function renderBanks(){
+  renderCloudCard();
   document.getElementById("rewardBankList").innerHTML=state.rewardBank.map(r=>`
     <div class="row"><div style="flex:1;font-size:14px">${esc(r.label)}</div>
     <button class="x-btn" onclick="delReward('${r.id}')">✕</button></div>`).join("")||`<div class="muted">Empty — add rewards below or in your morning paste.</div>`;
@@ -776,6 +893,7 @@ function show(which){
   ["dump","review","tracker"].forEach(v=>toggleEl("view-"+v, v===which));
 }
 function setTab(t){
+  curTab = t;
   ["today","banks","stats"].forEach(x=>{
     document.getElementById("nav-"+x).classList.toggle("active",x===t);
     if(x!=="today") toggleEl("view-"+x, x===t);
@@ -812,6 +930,10 @@ if(state.today && state.today.date !== todayStr() && state.today.tasks.length){
 }
 renderAll();
 setTab("today");
+initCloudClient();
+renderHeaderCloud();
+pullFromCloud();
+document.addEventListener("visibilitychange", () => { if(!document.hidden){ pullFromCloud(); renderHeaderCloud(); } });
 </script>
 </body>
 </html>
