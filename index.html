@@ -59,7 +59,7 @@
   .task-label { flex:1; font-size:14.5px; line-height:1.35; }
   .task.sub .task-label { font-size:13.5px; opacity:0.9; }
   .task.done .task-label { text-decoration:line-through; opacity:0.5; }
-  .task-points { font-size:12px; font-weight:800; color:#a78bfa; min-width:30px; text-align:right; }
+  .task-points { font-size:12px; font-weight:800; color:#a78bfa; min-width:52px; text-align:right; white-space:nowrap; }
   .bonus-chip { font-size:11px; font-weight:900; color:#fbbf24; }
 
   .cat-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
@@ -89,6 +89,35 @@
   .hidden { display:none !important; }
   .update-banner { background:#1d4ed8; border-radius:14px; padding:12px; font-size:13px; margin-bottom:14px; font-weight:700; }
 
+  .topbar { position:sticky; top:0; z-index:40; display:flex; justify-content:space-between; align-items:center; background:rgba(26,26,46,0.96); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:10px 14px; margin-bottom:12px; }
+  .chip { display:inline-block; font-size:11px; font-weight:800; color:#fbbf24; background:rgba(251,191,36,0.12); border-radius:999px; padding:2px 8px; margin:3px 6px 0 0; }
+  .chip.on { background:#fbbf24; color:#1f1f33; }
+  .chip.carry { color:#60a5fa; background:rgba(96,165,250,0.15); }
+  .chips { margin-top:2px; }
+  .meta { font-size:11px; font-weight:400; opacity:.55; margin-top:2px; }
+  .card.mission { padding:12px 14px; }
+  .card.m1 { padding:18px 16px; border:2px solid rgba(167,139,250,0.6); }
+  .card.next-up { border:2px solid #fbbf24; box-shadow:0 0 18px rgba(251,191,36,0.55); animation:glow 1.8s ease-in-out infinite; }
+  .mtags { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:4px; }
+  .mrank { background:#a78bfa; color:#0f0f1a; font-weight:900; font-size:12px; padding:2px 9px; border-radius:8px; }
+  .start-tag { font-size:11px; font-weight:900; color:#34d399; letter-spacing:.3px; }
+  .next-tag { font-size:11px; font-weight:900; color:#fbbf24; }
+  .task.big { padding:16px 6px; }
+  .checkbox.big { min-width:36px; height:36px; font-size:20px; }
+  .task-label.big { font-size:18px; font-weight:700; }
+  .slot-empty { font-size:12.5px; opacity:.55; text-align:center; border-style:dashed; }
+  .banner { display:flex; align-items:center; gap:8px; justify-content:space-between; border-radius:14px; padding:12px 14px; font-size:14px; font-weight:700; margin-bottom:12px; }
+  .banner.calm { background:#1e3a5f; }
+  .banner.good { background:#065f46; }
+  .strip { display:flex; justify-content:space-between; gap:6px; }
+  .dot { flex:1; height:34px; border-radius:50%; max-width:44px; border:2px solid rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; opacity:.8; }
+  .dot.hit { background:#10b981; border-color:#10b981; color:#fff; opacity:1; }
+  .dot.today { border-color:#fbbf24; }
+  .claimrow { display:flex; align-items:center; gap:10px; background:rgba(0,0,0,0.12); border-radius:12px; padding:10px; margin-bottom:8px; }
+  details.card summary { cursor:pointer; font-weight:800; font-size:14px; }
+  #toast { position:fixed; top:70px; left:50%; transform:translateX(-50%) scale(.9); background:#7c3aed; color:#fff; font-weight:900; font-size:16px; padding:14px 22px; border-radius:16px; z-index:200; opacity:0; pointer-events:none; transition:all .25s; box-shadow:0 8px 24px rgba(0,0,0,.4); text-align:center; }
+  #toast.show { opacity:1; transform:translateX(-50%) scale(1); }
+  @keyframes glow { 0%,100%{box-shadow:0 0 10px rgba(251,191,36,0.35)} 50%{box-shadow:0 0 22px rgba(251,191,36,0.8)} }
   @keyframes popIn { 0%{transform:scale(.7);opacity:0} 70%{transform:scale(1.05)} 100%{transform:scale(1);opacity:1} }
   @keyframes wiggle { 0%,100%{transform:rotate(0) scale(1)} 25%{transform:rotate(-2deg) scale(1.03)} 75%{transform:rotate(2deg) scale(1.03)} }
   @keyframes fall { 0%{transform:translateY(-10vh) rotate(0);opacity:1} 100%{transform:translateY(110vh) rotate(720deg);opacity:.7} }
@@ -99,7 +128,7 @@
 <body>
 <div class="container">
   <div class="header">
-    <div class="title">⚡ Daily Mission OS <span style="font-size:10px;opacity:.4;font-weight:400">v5</span></div>
+    <div class="title">⚡ Daily Mission OS <span style="font-size:10px;opacity:.4;font-weight:400">v7</span></div>
     <div style="text-align:right">
       <div class="savebadge" id="saveBadge"></div>
       <div id="cloudBadge" style="font-size:10px;font-weight:700;margin-top:2px"></div>
@@ -110,21 +139,20 @@
   <div id="view-dump">
     <div class="update-banner hidden" id="updateBanner">🔄 Updating today's mission — paste the full updated list from your Claude Project. Your ticks and earned rewards are kept.</div>
     <div class="card">
-      <div class="card-title" id="dumpTitle">🌅 Paste Your Day</div>
-      <div class="muted">Paste the organized list from your Claude Project. Headings = categories, * bullets = tasks with [weight], indented - lines = subtasks, [x] = already completed, "before 4:30 PM" in the text = +3 bonus if you beat it.</div>
-      <textarea id="dumpInput" placeholder="Tech Club
-* [9] Send all Tech Club details to management before 4:30 PM
-* [7] Record protein drink video
-  - Take pictures of each drink
-  - Taste test and rank them
-  - Record speaking video
+      <div class="card-title" id="dumpTitle">🌅 Paste Your List</div>
+      <div class="muted">Your day starts by itself (Foundation, auto missions, carried tasks). Only paste when you have a new ranked list from your Claude Project. Headings: Missions (lines start "M1 · ", "M2 · ", "M3 · "), Tasks, Bonus. [x] = already done. "before 4:30 PM" = +3 if on time. "🔥 Hard Start +3" = +3 when done. Tasks not in the pasted list are removed (you can restore them).</div>
+      <textarea id="dumpInput" placeholder="Missions
+* [10] M1 · Collect Kelvin's payment at 7 PM
+* [9] M2 · Send 30 outreach messages 🔥 Hard Start +3
+* [7] M3 · Post 1 piece of content 🔥 Hard Start +3
+
+Tasks
+* [5] Mark Year 5 spreadsheets by 4 PM
+* [3] Meal prep
 
 Bonus
-* Record room rental video
-
-Rewards
-* Lotus snacks up to RM20"></textarea>
-      <button class="big-btn" id="organizeBtn" onclick="organize()">🚀 Organize My Day</button>
+* Record 5 kettlebell shorts 🔥 Hard Start +3"></textarea>
+      <button class="big-btn" id="organizeBtn" onclick="organize()">🔄 Update My Day</button>
       <button class="big-btn grey hidden" id="cancelUpdateBtn" style="margin-top:8px" onclick="cancelUpdate()">← Back to tracker</button>
     </div>
     <div class="card" id="carryCard"></div>
@@ -146,22 +174,26 @@ Rewards
 
   <!-- ============ TODAY: TRACKER ============ -->
   <div id="view-tracker" class="hidden">
+    <div class="topbar" id="topBar"></div>
+    <div id="banners"></div>
     <div class="dashboard">
       <div class="dash-grid">
         <div class="dash-item"><div class="dash-label">Points</div><div class="dash-value" id="dPoints">0 / 100</div></div>
         <div class="dash-item"><div class="dash-label">Progress</div><div class="dash-value" id="dPct">0%</div></div>
-        <div class="dash-item"><div class="dash-label">Tasks</div><div class="dash-value" id="dTasks">0 / 0</div></div>
+        <div class="dash-item"><div class="dash-label">Missions</div><div class="dash-value" id="dTasks">0 / 0</div></div>
         <div class="dash-item"><div class="dash-label">Rewards</div><div class="dash-value" id="dReward">🔒</div></div>
       </div>
       <div class="progress-wrap"><div class="progress-bar" id="pBar"></div><div class="progress-text" id="pTxt">0%</div></div>
       <div class="milestone" id="milestone">🚩 Getting Started</div>
     </div>
+    <div class="card" id="weekCard"><div class="card-title">📅 This week</div><div id="weekStrip"></div></div>
     <div id="catList"></div>
     <div class="card bonus-card" id="bonusCard">
-      <div class="card-title">⭐ Bonus Quests</div>
-      <div class="muted" style="opacity:.85">0 mission points — each completed bonus = +1 reward claim.</div>
+      <div class="card-title">⭐ Bonus · Unlocks Tier 2</div>
+      <div class="muted" style="opacity:.85">0 points. Tick at least 1 Bonus item (with the target hit) to unlock Tier 2.</div>
       <div id="bonusList"></div>
     </div>
+    <details class="card hidden" id="bankToday"></details>
     <div class="card" id="vaultCard"></div>
     <button class="big-btn green" style="margin-bottom:8px" onclick="copyStatus()">📤 Copy Status for AI</button>
     <button class="big-btn" style="margin-bottom:8px" onclick="startUpdate()">🔄 Update Day (paste new list)</button>
@@ -170,18 +202,36 @@ Rewards
 
   <!-- ============ BANKS ============ -->
   <div id="view-banks" class="hidden">
+    <div class="card" id="modeCard"></div>
     <div class="card">
       <div class="card-title">🎁 Reward Bank</div>
-      <div class="muted">Claims pick randomly from here. Unclaimed rewards stay forever.</div>
+      <div class="muted">A claim picks one reward at random from its tier only. Rewards can repeat. A claimed reward must be used within 7 days.</div>
       <div id="rewardBankList"></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <select id="newRewardTier" style="background:#12121f;color:#f5f5f7;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:0 8px"><option value="1">T1</option><option value="2">T2</option><option value="3">T3</option><option value="4">T4</option></select>
+        <input type="text" id="newReward" placeholder="Reward…">
+      </div>
       <div style="display:flex;gap:8px;margin-top:8px">
-        <input type="text" id="newReward" placeholder="Add a reward…">
+        <input type="text" id="newRewardLimit" placeholder="Limit, e.g. RM20, 10-min timer">
         <button class="plus-btn" onclick="addReward()">+</button>
       </div>
     </div>
     <div class="card">
+      <div class="card-title">🔁 Daily Fundamentals</div>
+      <div class="muted">These appear every morning, before you add anything. They share 30 of the 100 points by weight, in time-of-day order. Remove any you don't want.</div>
+      <div id="fundList"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <input type="text" id="newFund" placeholder="Add a fundamental…">
+        <button class="plus-btn" onclick="addFund()">+</button>
+      </div>
+      <div class="muted" style="margin-top:12px">Or paste a whole list (name + "(weight 8)", "- " for steps, "When:" / "Why:" lines) — replaces the list above:</div>
+      <textarea id="bulkFund" style="min-height:90px" placeholder="1. Pray (weight 8)&#10;When: after shower&#10;2. Congestion care (weight 7)&#10;- Rinse&#10;- Nasal spray"></textarea>
+      <button class="big-btn" style="margin-top:8px" onclick="bulkFund()">Save Fundamentals List</button>
+      <button class="big-btn" style="margin-top:8px" onclick="addFundToday()">Add missing ones to today</button>
+    </div>
+    <div class="card">
       <div class="card-title">📥 Task Bank</div>
-      <div class="muted">Unfinished tasks live here and get suggested each morning.</div>
+      <div class="muted">Unfinished tasks carry to the next day on their own. After 3 carries (↪3), or when you add one here, they park here (0 pts) until you add them back.</div>
       <div id="taskBankList"></div>
       <div style="display:flex;gap:8px;margin-top:8px">
         <input type="text" id="newBankTask" placeholder="Add a task for later…">
@@ -206,9 +256,10 @@ Rewards
         <div class="dash-item"><div class="dash-label">7-day avg</div><div class="dash-value" id="s7">0%</div></div>
         <div class="dash-item"><div class="dash-label">30-day avg</div><div class="dash-value" id="s30">0%</div></div>
         <div class="dash-item"><div class="dash-label">All-time</div><div class="dash-value" id="sAll">0%</div></div>
-        <div class="dash-item"><div class="dash-label">Streak ≥75%</div><div class="dash-value" id="sStreak">0 🔥</div></div>
+        <div class="dash-item"><div class="dash-label">Target</div><div class="dash-value" id="sStreak">75%</div></div>
       </div>
     </div>
+    <div class="card"><div class="card-title">📅 This week</div><div id="statWeek"></div></div>
     <div class="card"><div class="card-title">Last 14 days</div><div id="chart"></div></div>
     <div class="card"><div class="card-title">History</div><div id="histList"></div></div>
   </div>
@@ -224,7 +275,7 @@ Rewards
 <!-- MODALS -->
 <div class="overlay" id="endOverlay">
   <div class="modal">
-    <div style="font-size:15px;margin-bottom:10px">End today's mission? Unfinished tasks move to your Task Bank, and today is saved to Stats.</div>
+    <div style="font-size:15px;margin-bottom:10px">End today's mission? Unfinished tasks carry to the next day, and today is saved to Stats.</div>
     <div style="font-size:13px;opacity:.7;margin-bottom:16px">Just changing today's tasks? Cancel and use 🔄 Update Day instead — it keeps your ticks and doesn't touch Stats.</div>
     <div style="display:flex;gap:10px">
       <button class="small-btn" style="flex:1;background:#374151" onclick="hideEnd()">Cancel</button>
@@ -232,6 +283,7 @@ Rewards
     </div>
   </div>
 </div>
+<div id="toast"></div>
 <div class="overlay" id="celebrateOverlay" onclick="hideCelebrate()">
   <div class="modal pop" style="text-align:center" id="celebrateBox"></div>
 </div>
@@ -242,7 +294,7 @@ const KEY = "dmos-v1";
 const BONUS_PTS = 3;
 const PALETTE = ["#f472b6","#60a5fa","#34d399","#a78bfa","#fbbf24","#fb923c","#22d3ee","#e879f9"];
 const uid = () => Math.random().toString(36).slice(2,10);
-const todayStr = () => new Date().toISOString().slice(0,10);
+const todayStr = () => { const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); };
 const nowMin = () => { const d=new Date(); return d.getHours()*60+d.getMinutes(); };
 
 /* ================= CLOUD SYNC (Supabase) =================
@@ -326,8 +378,9 @@ async function pullFromCloud(){
       const cloud = data.data;
       const localTs = state.updatedAt || 0, cloudTs = cloud.updatedAt || 0;
       if(cloudTs > localTs){
-        state = Object.assign({ taskBank:[], rewardBank:[], today:null, history:[] }, cloud);
-        if(state.today && state.today.tasks) state.today.tasks.forEach(t=>{ if(!t.subs) t.subs=[]; });
+        state = Object.assign({ taskBank:[], rewardBank:[], today:null, history:[], fundamentals:null }, cloud);
+        ensureShape();
+        if(rolloverIfNeeded()) scheduleCloudSync();
         localStorage.setItem(KEY, JSON.stringify(state));
         renderAll(); setTab(curTab);
         setBadge("☁️ Synced from another device");
@@ -339,16 +392,137 @@ async function pullFromCloud(){
   }catch(e){ /* offline or not configured yet — keep working from local storage */ }
 }
 
-let state = { taskBank: [], rewardBank: [], today: null, history: [] };
+/* ================= RULES (Part B) ================= */
+const FUND_CAT = "Foundation";
+const MISSION_PTS = [20,17,13];            /* M1, M2, M3 */
+const POOL = { foundation:30, task:20 };   /* Missions 50 + Foundation 30 + Tasks 20 = 100 */
+const HARD_RE = /🔥\s*Hard Start\s*\+?\s*3/i;
+const HARD_PTS = 3;
+const TIER_CAP = { debt:{1:5,2:15,3:40,4:100}, b:{1:5,2:20,3:60,4:200} };
+const MONTH_CAP = { debt:570, b:810 };
+const T2_WEEK_MAX = 3, T2_MONTH_MAX = 12, CLAIM_DAYS = 7;
+const NOTE_ROCK = "I am the rock. Tomorrow, M1 first.";
+const DEFAULT_AUTO = [
+  { key:"outreach", n:30, weight:9 },
+  { key:"post",     n:1,  weight:7 }
+];
+const AUTO_RE = { outreach:/outreach messages?/i, post:/pieces? of content/i };
+/* slot: 0 = morning, 1 = all-day, 2 = night */
+const DEFAULT_FUND = [
+  {key:"bed",label:"Make the bed right after waking",weight:6,slot:0,why:"An easy first win that starts the day with momentum."},
+  {key:"weigh",label:"Weigh myself",weight:7,slot:0,when:"Morning, before eating",why:"Consistent daily data to track progress toward the body goal."},
+  {key:"congestion",label:"Congestion care",weight:7,slot:0,subs:["Steam, clean using vapor inhalant in hot water","Rinse using CP (neti) cup","Take nasal spray","Apply vapor rub to nose"],why:"Clear breathing improves sleep, training and daily energy."},
+  {key:"pray",label:"Pray",weight:8,slot:0,when:"After morning shower, before breakfast",why:"Sets a calm, grounded mindset before the day starts."},
+  {key:"breakfast",label:"Take breakfast",weight:8,slot:0,why:"Fuels the morning, supports training and steady energy."},
+  {key:"morningsupp",label:"Take morning supplements: zinc, fish oil, creatine",weight:7,slot:0,why:"Supports immunity, recovery and strength, only works if consistent."},
+  {key:"workout",label:"Workout",weight:8,slot:1,why:"Builds toward the target physique and keeps energy and discipline high."},
+  {key:"viz",label:"Play daily visualization audio, at least once",weight:7,slot:1,why:"Keeps goals (income, body, life) in focus every day."},
+  {key:"macros",label:"Fulfil daily calories and macros",weight:8,slot:1,why:"Tick only when daily targets are hit."},
+  {key:"steps",label:"Walk 10k steps",weight:7,slot:1,why:"Burns extra calories, improves health and recovery."},
+  {key:"night",label:"Night wind-down",weight:8,slot:2,subs:["Shower before 11 PM","Take night supplements: ashwagandha, magnesium","Play visualization","Box breathing / breathing exercise","Use ear plugs and blackout eye mask","Asleep by 12 AM"],why:"Good sleep controls recovery, mood, discipline and next-day performance."}
+];
+const WORKOUT_PLAN = {
+  1:"Grip work (gripper 5 min + rice bucket 6 min)",
+  2:"Rest or optional quad day (either counts)",
+  3:"Pull + delts + forearms",
+  4:"Chest + delts",
+  5:"School session + sprints",
+  6:"Shoulders + width",
+  0:"Sprints + legs"
+};
+const DEFAULT_REWARDS = [
+  [1,"Bukit Indah explore, coin flip for direction","20 min, free"],
+  [1,"Exotic fruit try, 1 fruit never eaten","RM5"],
+  [1,"Protein shake taste-test video","Use what you have"],
+  [2,"Lotus snack run","RM20"],
+  [2,"Convenience-store grab","RM20, 10-min timer"],
+  [2,"Strangest snack hunt, one supermarket","RM20, 10-min timer"],
+  [2,"3 unusual healthy snacks, taste-test same day","RM20"],
+  [2,"3 high-protein foods, ranked","RM20"],
+  [2,"Expensive healthy food verdict, 1 item","RM20"],
+  [2,"Spiciest food challenge","RM20"],
+  [2,"Weird food challenge, react on camera","RM20"],
+  [2,"Viral food try (trending this week)","RM20"],
+  [2,"1 premium food you normally skip","RM20"],
+  [3,"Fast-food meal","RM30"],
+  [3,"Dessert run, one shop, 2 items","RM30"],
+  [3,"Order something never ordered","RM40, 3-min scroll"],
+  [3,"Food from a country never tried","RM40, 10-min scroll"],
+  [3,"Mall unnecessary buy, one store","RM30, 15-min timer"],
+  [3,"Shopee sprint","RM50, 10-min timer"],
+  [4,"Sushi AYCE unlock","RM150, 30-min timer"],
+  [4,"Family dinner","RM120"],
+  [4,"Day-trip fund","RM150"]
+].map(r=>({tier:r[0],label:r[1],limit:r[2]}));
+
+/* ================= STATE ================= */
+const parseCost = s => { const m=String(s||"").match(/RM\s*(\d+)/i); return m?+m[1]:0; };
+let state = { taskBank:[], rewardBank:[], today:null, history:[], fundamentals:null, fundVer:0, rewardVer:0,
+  autoMissions:null, target:75, rewardMode:"debt", claimLog:[], progress:null, note:"" };
 let review = null;
 let updateMode = false;
+let expanded = {};      /* which collapsed groups the user opened (memory only) */
+let droppedTasks = [];  /* tasks removed by the last Update Day (for Restore) */
+
+function ensureShape(){
+  const S = state;
+  if(!Array.isArray(S.taskBank)) S.taskBank=[];
+  if(!Array.isArray(S.history)) S.history=[];
+  if(!Array.isArray(S.claimLog)) S.claimLog=[];
+  if(!Array.isArray(S.rewardBank)) S.rewardBank=[];
+  if(!S.target) S.target=75;
+  if(!S.rewardMode) S.rewardMode="debt";
+  if(typeof S.note!=="string") S.note="";
+  if(!Array.isArray(S.autoMissions)) S.autoMissions = DEFAULT_AUTO.map(a=>Object.assign({},a));
+  if(!S.progress) S.progress = { lastEvalWeek:"", lastChangeWeek:"", deloadBanner:false, msg:"" };
+  if((S.rewardVer||0) < 2){
+    S.rewardBank = DEFAULT_REWARDS.map(r=>({id:uid(),tier:r.tier,label:r.label,limit:r.limit,cost:parseCost(r.limit)}));
+    S.rewardVer = 2;
+  }
+  S.rewardBank.forEach(r=>{ if(!r.tier) r.tier=1; if(r.cost==null) r.cost=parseCost(r.limit); });
+  if((S.fundVer||0) < 3 || !Array.isArray(S.fundamentals)){
+    S.fundamentals = DEFAULT_FUND.map(f=>Object.assign({id:uid(),subs:[],when:"",why:""},f));
+    S.fundVer = 3;
+    if(S.today) S.today.v = 0;  /* rebuild today's Foundation with the fixed rubric */
+  }
+  S.taskBank.forEach(b=>{ if(!b.group) b.group="task"; if(!b.carryN) b.carryN=1; });
+  migrateToday();
+}
+function migrateToday(){
+  const t = state.today; if(!t || t.v===7) return;
+  const old = t.tasks || [];
+  const tasks = [];
+  state.fundamentals.slice().sort((a,b)=>(a.slot==null?1:a.slot)-(b.slot==null?1:b.slot)).forEach(f=>{
+    const nt = makeFundTask(f);
+    const ot = old.find(o=>o.fund && matchFund(o.label,nt));
+    if(ot){
+      nt.done = !!ot.done;
+      nt.subs.forEach(s=>{ const os=(ot.subs||[]).find(x=>similar(x.label,s.label)); if(os&&os.done) s.done=true; });
+      if(nt.subs.length) nt.done = nt.subs.every(s=>s.done);
+    }
+    tasks.push(nt);
+  });
+  old.filter(o=>!o.fund).forEach(o=>{
+    if(!o.subs) o.subs=[];
+    o.group = o.group || "task";
+    if(o.group==="task") o.category="Tasks";
+    tasks.push(o);
+  });
+  ensureAutos(tasks);
+  t.tasks = tasks;
+  t.bonus = (t.bonus||[]).map(b=>Object.assign({deadlineMin:parseDeadline(b.label),bonusEarned:false},b));
+  t.earnedT1 = !!(t.earnedT1 || t.earned75);
+  t.bonusEver = !!(t.bonusEver || t.bonusEarnedCount>0 || t.bonus.some(b=>b.done));
+  t.claimed = t.claimed || [];
+  t.nonMissionRun = 0; t.avoidShown = 0; t.v = 7;
+  normalizeMissions(t); assignPoints(t.tasks);
+}
 
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) state = Object.assign({ taskBank:[], rewardBank:[], today:null, history:[] }, JSON.parse(raw));
-    /* migrate v1 tasks without subs */
-    if(state.today && state.today.tasks) state.today.tasks.forEach(t=>{ if(!t.subs) t.subs=[]; });
+    if (raw) state = Object.assign({ taskBank:[], rewardBank:[], today:null, history:[], fundamentals:null }, JSON.parse(raw));
+    ensureShape();
     setBadge("");
   } catch(e) { setBadge("⚠ storage unavailable"); }
 }
@@ -358,11 +532,35 @@ function save() {
   catch(e) { setBadge("⚠ Save failed"); }
   scheduleCloudSync();
 }
+
 function setBadge(t){ document.getElementById("saveBadge").textContent = t || todayStr(); }
 
 function catColor(cat){
   let h=0; for(const ch of (cat||"")) h=(h*31+ch.charCodeAt(0))>>>0;
   return PALETTE[h % PALETTE.length];
+}
+
+
+/* ================= DATES ================= */
+function pd(s){ const a=s.split("-").map(Number); return new Date(a[0],a[1]-1,a[2]); }
+function fdate(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function addDays(s,n){ const d=pd(s); d.setDate(d.getDate()+n); return fdate(d); }
+function weekStart(s){ const d=pd(s); d.setDate(d.getDate()-((d.getDay()+6)%7)); return fdate(d); }
+function monthKey(s){ return s.slice(0,7); }
+function prevMonth(mk){ const a=mk.split("-").map(Number); const d=new Date(a[0],a[1]-2,1); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); }
+function weeksEndingIn(mk){
+  const a=mk.split("-").map(Number); const out=[];
+  const days=new Date(a[0],a[1],0).getDate();
+  for(let d=1; d<=days; d++){
+    const dt=new Date(a[0],a[1]-1,d);
+    if(dt.getDay()===0) out.push(addDays(fdate(dt),-6));
+  }
+  return out;
+}
+function fmtP(x){ x=Math.round(x*10)/10; return Number.isInteger(x)?String(x):x.toFixed(1); }
+function fmtTime(min){
+  const h=Math.floor(min/60), m=min%60, ap=h>=12?"PM":"AM", h12=h%12||12;
+  return m? `${h12}:${String(m).padStart(2,"0")} ${ap}` : `${h12} ${ap}`;
 }
 
 /* ================= PARSER ================= */
@@ -376,6 +574,7 @@ function parseDeadline(s){
   if(!ap && h<=7) h+=12; /* bare "by 2" assumed afternoon */
   return h*60+min;
 }
+
 function stripMarkers(s){
   /* strips leading [8] weight and/or [x] done markers in any order */
   let weight=null, done=false, changed=true;
@@ -388,12 +587,38 @@ function stripMarkers(s){
   }
   return { label:s.trim(), weight, done };
 }
+
+const hasHard = s => HARD_RE.test(s||"");
+function baseLabel(s){ return String(s||"").replace(HARD_RE,"").replace(/^M[1-3]\s*[·•.:\-–—]\s*/i,"").replace(/\s+/g," ").trim(); }
+function autoKeyOf(label){ for(const k in AUTO_RE){ if(AUTO_RE[k].test(label)) return k; } return null; }
+function autoLabel(a){
+  if(a.key==="post") return (a.n===1?"Post 1 piece of content":`Post ${a.n} pieces of content`)+" 🔥 Hard Start +3";
+  return `Send ${a.n} outreach messages 🔥 Hard Start +3`;
+}
+function groupOf(section){
+  const low=String(section||"").toLowerCase().replace(/\(.*?\)/g,"").trim();
+  if(/^missions?\b/.test(low)) return "mission";
+  if(/^foundation\b/.test(low)) return "foundation";
+  return "task";
+}
+function mkTask(o){
+  return Object.assign({id:uid(),label:"",category:"Tasks",group:"task",rank:0,weight:5,urgent:false,done:false,
+    deadlineMin:null,bonusEarned:false,subs:[],points:0}, o);
+}
 function parseDump(text){
   const rawLines = text.split(/\n/).filter(l => !/^\s*```/.test(l));
-  const tasks=[], bonus=[], rewards=[];
-  let section="Other", mode="tasks", orderIdx=0;
+  const tasks=[], bonus=[], rewards=[], bank=[];
+  let section="Tasks", mode="tasks", orderIdx=0;
   const bulletRe = /^[-*•·]\s*/;
+  const rankRe = /^M([1-3])\s*[·•.:\-–—]\s*/i;
   const urgentRe = /\b\d{1,2}([:.]\d{2})?\s?(am|pm)\b|deadline|before\s/i;
+  const mk = (sm, extra) => {
+    let label=sm.label, rank=0, weight=sm.weight, done=sm.done;
+    let m=label.match(rankRe);
+    if(m){ rank=+m[1]; label=label.slice(m[0].length); const sm2=stripMarkers(label); label=sm2.label; if(sm2.weight!=null) weight=sm2.weight; if(sm2.done) done=true; }
+    const u=urgentRe.test(label);
+    return mkTask(Object.assign({label,category:section,group:groupOf(section),rank,weight,urgent:u,done,deadlineMin:parseDeadline(label)}, extra||{}));
+  };
   for(const rawLine of rawLines){
     if(!rawLine.trim()) continue;
     const trimmed = rawLine.trim();
@@ -403,11 +628,13 @@ function parseDump(text){
       const low = trimmed.toLowerCase().replace(/[:：#]/g,"").trim();
       if(/^bonus/.test(low)){ mode="bonus"; continue; }
       if(/^rewards?\b/.test(low)){ mode="rewards"; continue; }
+      if(/^task bank/.test(low)){ mode="bank"; continue; }
       if(/^goals?\b/.test(low)){ mode="goal"; continue; }
-      if(/^tasks?\b/.test(low)){ mode="tasks"; section="Other"; continue; }
+      if(/^tasks?\b/.test(low)){ mode="tasks"; section="Tasks"; continue; }
+      if(/^missions?\b/.test(low)){ mode="tasks"; section="Missions"; continue; }
       if(mode==="goal" && trimmed.length>=40){
         const sm = stripMarkers(trimmed);
-        tasks.push({id:uid(),label:sm.label,category:"Priority",weight:10,urgent:true,done:sm.done,deadlineMin:parseDeadline(sm.label),bonusEarned:false,subs:[]});
+        tasks.push(mk(sm,{category:"Missions",group:"mission",weight:10,urgent:true}));
         continue;
       }
       if((mode==="tasks"||mode==="goal") && trimmed.length<40){
@@ -415,37 +642,37 @@ function parseDump(text){
       }
       if(mode==="tasks" && trimmed.length>=40){
         const sm = stripMarkers(trimmed);
-        const u = urgentRe.test(sm.label);
-        tasks.push({id:uid(),label:sm.label,category:section,weight:sm.weight||(u?8:5),urgent:u,done:sm.done,deadlineMin:parseDeadline(sm.label),bonusEarned:false,subs:[]});
+        const t=mk(sm); t.weight = sm.weight || (t.urgent?8:5);
+        tasks.push(t);
       }
       continue;
     }
     const sm = stripMarkers(trimmed.replace(bulletRe,"").trim());
     if(!sm.label) continue;
     if(mode==="rewards"){ rewards.push(sm.label); continue; }
-    if(mode==="bonus"){ bonus.push({id:uid(),label:sm.label,done:sm.done}); continue; }
-    /* subtask: indented bullet under the previous task */
+    if(mode==="bank"){ bank.push(sm.label); continue; }
+    if(mode==="bonus"){ bonus.push({id:uid(),label:sm.label,done:sm.done,deadlineMin:parseDeadline(sm.label),bonusEarned:false}); continue; }
     if(indented && tasks.length){
-      tasks[tasks.length-1].subs.push({id:uid(),label:sm.label,done:sm.done});
+      tasks[tasks.length-1].subs.push({id:uid(),label:sm.label,done:sm.done,pts:0});
       continue;
     }
-    const urgent = urgentRe.test(sm.label);
-    let weight = sm.weight;
-    if(weight===null){ weight = Math.max(3, 9 - Math.floor(orderIdx/3)); if(urgent) weight=Math.max(weight,8); }
-    tasks.push({ id:uid(), label:sm.label, category: mode==="goal"?"Priority":section, weight, urgent, done:sm.done, deadlineMin:parseDeadline(sm.label), bonusEarned:false, subs:[] });
+    const t=mk(sm);
+    if(t.weight==null){
+      let w = Math.max(3, 9 - Math.floor(orderIdx/3)); if(t.urgent) w=Math.max(w,8); t.weight=w;
+    }
+    tasks.push(t);
     orderIdx++;
   }
-  /* if a parent has subs, its done state derives from subs; a [x] parent marks all subs done */
   tasks.forEach(t=>{
     if(t.subs.length){
       if(t.done) t.subs.forEach(s=>s.done=true);
       t.done = t.subs.every(s=>s.done);
     }
   });
-  return {tasks, bonus, rewards};
+  return {tasks, bonus, rewards, bank};
 }
 
-/* largest-remainder rounding helper */
+/* ================= POINTS ================= */
 function distribute(total, weights){
   const totalW = weights.reduce((s,w)=>s+w,0) || 1;
   const raw = weights.map(w=>w/totalW*total);
@@ -456,33 +683,67 @@ function distribute(total, weights){
   for(let k=0;k<rem;k++) out[order[k%order.length].i]+=1;
   return out;
 }
+
+const r1 = x => Math.round(x*10)/10;
+/* each share rounded to the nearest 0.1, then the leftover goes to the lowest-weight item so the group totals exactly */
+function distNearest(total, weights){
+  const sum=weights.reduce((a,b)=>a+b,0)||1;
+  const out=weights.map(w=>Math.round(w/sum*total));
+  const diff=total-out.reduce((a,b)=>a+b,0);
+  if(diff){ let k=0; weights.forEach((w,i)=>{ if(w<=weights[k]) k=i; }); out[k]+=diff; }
+  return out;
+}
+function setPts(t,p){
+  t.points=p;
+  if(t.subs && t.subs.length){
+    const sp=distribute(Math.round(p*10), t.subs.map(()=>1));
+    t.subs.forEach((s,j)=>s.pts=sp[j]/10);
+  }
+}
 function assignPoints(tasks){
-  if(!tasks.length) return tasks;
-  const pts = distribute(100, tasks.map(t=>t.weight||1));
-  tasks.forEach((t,i)=>{
-    t.points = pts[i];
-    if(t.subs.length){
-      const sp = distribute(t.points, t.subs.map(()=>1));
-      t.subs.forEach((s,j)=>s.pts=sp[j]);
-    }
+  tasks.forEach(t=>{ if(!t.subs) t.subs=[]; });
+  tasks.filter(t=>t.group==="mission").forEach(t=>setPts(t, MISSION_PTS[(t.rank||0)-1]||0));
+  [["foundation",POOL.foundation],["task",POOL.task]].forEach(([g,pool])=>{
+    const arr=tasks.filter(t=>t.group===g); if(!arr.length) return;
+    const p=distNearest(pool*10, arr.map(t=>t.weight||1));
+    arr.forEach((t,i)=>setPts(t,p[i]/10));
   });
   return tasks;
 }
+function normalizeMissions(day){
+  if(!day.bonus) day.bonus=[];
+  const ms=day.tasks.filter(t=>t.group==="mission");
+  const used=new Set(), pending=[];
+  ms.slice().sort((a,b)=>(b.weight||0)-(a.weight||0)).forEach(t=>{
+    if(t.rank>=1 && t.rank<=3 && !used.has(t.rank)) used.add(t.rank); else { t.rank=0; pending.push(t); }
+  });
+  pending.forEach(t=>{
+    const free=[1,2,3].find(r=>!used.has(r));
+    if(free){ t.rank=free; used.add(free); }
+    else {   /* 4th/5th mission becomes a Bonus item */
+      day.tasks=day.tasks.filter(x=>x!==t);
+      day.bonus.push({id:t.id,label:t.label,done:fullyDone(t),deadlineMin:t.deadlineMin,bonusEarned:!!t.bonusEarned});
+    }
+  });
+}
 
 /* ================= SCORING ================= */
-function fullyDone(t){ return t.subs.length ? t.subs.every(s=>s.done) : t.done; }
-function earnedPts(t){
-  let p = t.subs.length ? t.subs.reduce((s,x)=>s+(x.done?x.pts:0),0) : (t.done?t.points:0);
-  if(fullyDone(t) && t.bonusEarned) p += BONUS_PTS;
-  return p;
+function fullyDone(t){ return t.subs && t.subs.length ? t.subs.every(s=>s.done) : !!t.done; }
+function basePts(t){ return r1(t.subs.length ? t.subs.reduce((s,x)=>s+(x.done?x.pts:0),0) : (t.done?t.points:0)); }
+function extraPts(t){ return fullyDone(t) ? (hasHard(t.label)?HARD_PTS:0)+(t.bonusEarned?BONUS_PTS:0) : 0; }
+function earnedPts(t){ return r1(basePts(t)+extraPts(t)); }
+function totals(){
+  const t=state.today; let base=0, extra=0;
+  t.tasks.forEach(x=>{ base+=basePts(x); extra+=extraPts(x); });
+  (t.bonus||[]).forEach(b=>{ extra+=extraPts(b); });
+  if(!t.tasks.some(x=>x.group==="task")) base+=POOL.task;   /* empty Tasks group = 20 pts automatically */
+  return { base:r1(base), extra:r1(extra), total:r1(base+extra) };
 }
-function points(){ return state.today.tasks.reduce((s,t)=>s+earnedPts(t),0); }
-function claimsTotal(){ const t=state.today; return (t.earned75?1:0)+(t.earned90?1:0)+(t.bonusEarnedCount||0); }
-function claimsAvail(){ return claimsTotal() - (state.today.claimed||[]).length; }
+function points(){ return totals().total; }
 function refreshRatchets(){
-  const p=points();
-  if(p>=75) state.today.earned75=true;
-  if(p>=90) state.today.earned90=true;
+  const t=state.today; if(!t) return;
+  if(points() >= state.target - 1e-9) t.earnedT1=true;
+  if((t.bonus||[]).some(b=>b.done)) t.bonusEver=true;
 }
 function updateDeadlineBonus(t){
   if(fullyDone(t)){
@@ -491,8 +752,6 @@ function updateDeadlineBonus(t){
     t.bonusEarned=false;
   }
 }
-
-/* ================= FLOW: ORGANIZE / REVIEW / UPDATE ================= */
 function similar(a,b){
   a=a.toLowerCase().replace(/[^a-z0-9 ]/g,""); b=b.toLowerCase().replace(/[^a-z0-9 ]/g,"");
   if(a===b) return true;
@@ -501,61 +760,231 @@ function similar(a,b){
   let common=0; wa.forEach(w=>{if(wb.has(w))common++;});
   return common/Math.min(wa.size,wb.size) >= 0.7;
 }
+
+function matchFund(label, f){ return f.fkey==="workout" ? /^workout/i.test(label) : similar(label, f.label); }
+function workoutPlan(){ return WORKOUT_PLAN[new Date().getDay()]; }
+function makeFundTask(f){
+  const label = f.key==="workout" ? "Workout — "+workoutPlan() : f.label;
+  return mkTask({label,category:FUND_CAT,group:"foundation",weight:f.weight||5,fund:true,fkey:f.key||"",
+    slot:f.slot==null?1:f.slot,when:f.when||"",why:f.why||"",
+    subs:(f.subs||[]).map(l=>({id:uid(),label:l,done:false,pts:0}))});
+}
+function makeAutoMission(a){
+  return mkTask({label:autoLabel(a),category:"Missions",group:"mission",weight:a.weight,auto:a.key,
+    deadlineMin:null});
+}
+function ensureAutos(tasks){
+  state.autoMissions.forEach(a=>{ if(!tasks.some(t=>t.auto===a.key)) tasks.push(makeAutoMission(a)); });
+}
+
+/* ================= DAY LIFECYCLE ================= */
+function buildDay(){
+  const tasks=[];
+  state.fundamentals.slice().sort((a,b)=>(a.slot==null?1:a.slot)-(b.slot==null?1:b.slot)).forEach(f=>tasks.push(makeFundTask(f)));
+  const keep=[];
+  state.taskBank.forEach(b=>{
+    if(b.parked){ keep.push(b); return; }
+    tasks.push(mkTask({label:b.label,category:b.category||"Tasks",group:b.group||"task",rank:b.rank||0,weight:b.weight||5,
+      deadlineMin:parseDeadline(b.label),carried:true,carryN:b.carryN||1,
+      subs:(b.subs||[]).map(l=>({id:uid(),label:l,done:false,pts:0}))}));
+  });
+  state.taskBank=keep;
+  ensureAutos(tasks);
+  const day={v:7,date:todayStr(),tasks,bonus:[],earnedT1:false,bonusEver:false,claimed:[],nonMissionRun:0,avoidShown:0,avoidActive:false};
+  normalizeMissions(day); assignPoints(day.tasks);
+  return day;
+}
+function archiveDay(){
+  const t=state.today; if(!t) return;
+  const tot=totals();
+  t.tasks.filter(x=>!fullyDone(x) && !x.fund && !x.auto).forEach(x=>{
+    if(state.taskBank.some(b=>baseLabel(b.label).toLowerCase()===baseLabel(x.label).toLowerCase())) return;
+    const n=(x.carryN||0)+1;
+    state.taskBank.push({id:uid(),label:x.label,category:x.category,group:x.group,rank:x.rank||0,weight:x.weight||5,
+      carryN:n,parked:(n>=3 && x.deadlineMin==null),subs:x.subs.filter(s=>!s.done).map(s=>s.label)});
+  });
+  const ms=t.tasks.filter(x=>x.group==="mission"), m1=ms.find(x=>x.rank===1);
+  const autoDone={}; t.tasks.filter(x=>x.auto).forEach(x=>autoDone[x.auto]=fullyDone(x));
+  state.history.push({date:t.date,percent:tot.total,target:state.target,missionsDone:ms.filter(fullyDone).length,
+    m1Done:!!(m1&&fullyDone(m1)),bonusPts:tot.extra,done:t.tasks.filter(fullyDone).length,total:t.tasks.length,
+    claimed:(t.claimed||[]).map(c=>c.label),autoDone});
+  state.note = tot.total < state.target - 1e-9 ? NOTE_ROCK : "";
+  state.today=null;
+}
+function rolloverIfNeeded(){
+  let changed=false;
+  if(state.today && state.today.date!==todayStr()){ archiveDay(); changed=true; }
+  if(runProgression()) changed=true;
+  if(!state.today){ state.today=buildDay(); changed=true; }
+  return changed;
+}
+function askEndDay(){ document.getElementById("endOverlay").classList.add("show"); }
+function hideEnd(){ document.getElementById("endOverlay").classList.remove("show"); }
+function endDay(){
+  const under = points() < state.target - 1e-9;
+  archiveDay();
+  runProgression();
+  state.today=buildDay();
+  save(); hideEnd(); resetDumpUI(); renderAll(); setTab("today");
+  if(under) showCelebrate(`<div style="font-size:40px">🪨</div><div style="font-weight:900;font-size:18px;margin:8px 0">${NOTE_ROCK}</div>`);
+}
+
+/* ================= WEEK / MONTH / PROGRESSION ================= */
+function bestByDate(){ const m={}; state.history.forEach(h=>{ if(!m[h.date]||h.percent>m[h.date].percent) m[h.date]=h; }); return m; }
+function isHit(h){ return h.percent >= (h.target||75) - 1e-9; }
+function dayHit(d){
+  const e=bestByDate()[d]; if(e && isHit(e)) return true;
+  return !!(state.today && state.today.date===d && state.today.earnedT1);
+}
+function weekHits(ws){ let n=0; for(let i=0;i<7;i++) if(dayHit(addDays(ws,i))) n++; return n; }
+function tier4Earned(mk){
+  const wk=weeksEndingIn(mk); return wk.length>0 && wk.every(w=>weekHits(w)>=6);
+}
+function runProgression(){
+  const pr=state.progress, cur=weekStart(todayStr()); let changed=false;
+  if(!pr.lastEvalWeek){ pr.lastEvalWeek=addDays(cur,-7); changed=true; }
+  let next=addDays(pr.lastEvalWeek,7);
+  while(next<cur){
+    const prev=addDays(next,-7), h=weekHits(next), hp=weekHits(prev);
+    const ok=!pr.lastChangeWeek || prev>pr.lastChangeWeek;
+    if(h===7 && hp===7 && ok){
+      const nt=Math.min(90,state.target+5);
+      if(nt!==state.target){ state.target=nt; pr.lastChangeWeek=next; pr.deloadBanner=false; pr.msg=`Level up. Your target is now ${nt}%.`; }
+    } else if(h<=3 && hp<=3 && ok){
+      state.target=Math.max(75,state.target-5); pr.lastChangeWeek=next; pr.deloadBanner=true; pr.msg="";
+    }
+    const by=bestByDate();
+    state.autoMissions.forEach(a=>{
+      let days=0; for(let i=0;i<7;i++){ const e=by[addDays(next,i)]; if(e&&e.autoDone&&e.autoDone[a.key]) days++; }
+      if(days>=5) a.n=Math.ceil(a.n*110/100-1e-9);   /* volume overload: +10%, rounded up */
+    });
+    pr.lastEvalWeek=next; next=addDays(next,7); changed=true;
+  }
+  return changed;
+}
+function dismissMsg(k){
+  if(k==="note") state.note="";
+  if(k==="deload") state.progress.deloadBanner=false;
+  if(k==="level") state.progress.msg="";
+  if(k==="avoid" && state.today) state.today.avoidActive=false;
+  if(k==="dropped") droppedTasks=[];
+  save(); renderTracker();
+}
+function weekStripHtml(){
+  const td=state.today?state.today.date:todayStr(), ws=weekStart(td), names=["M","T","W","T","F","S","S"];
+  let dots="";
+  for(let i=0;i<7;i++){ const d=addDays(ws,i);
+    dots+=`<div class="dot ${dayHit(d)?"hit":""} ${d===td?"today":""}">${names[i]}</div>`; }
+  return `<div class="strip">${dots}</div><div style="text-align:center;font-size:12.5px;font-weight:700;margin-top:8px;opacity:.85">Tier 3: ${Math.min(weekHits(ws),6)} of 6 days</div>`;
+}
+
+/* ================= REWARDS ================= */
+function tierCap(tier){ return TIER_CAP[state.rewardMode][tier]; }
+function monthCap(){ return MONTH_CAP[state.rewardMode]; }
+function monthSpent(mk){ return r1(state.claimLog.filter(c=>c.date.slice(0,7)===mk).reduce((s,c)=>s+(c.cost||0),0)); }
+function availableClaims(){
+  const t=state.today; if(!t) return [];
+  const d=t.date, ws=weekStart(d), mk=monthKey(d), out=[];
+  const have=k=>state.claimLog.some(c=>c.key===k);
+  if(t.earnedT1 && !have("t1:"+d)) out.push({key:"t1:"+d,tier:1,desc:`Day at ${state.target}%+`});
+  if(t.earnedT1 && t.bonusEver && !have("t2:"+d)){
+    const wk=state.claimLog.filter(c=>c.tier===2 && weekStart(c.date)===ws).length;
+    const mo=state.claimLog.filter(c=>c.tier===2 && monthKey(c.date)===mk).length;
+    if(wk<T2_WEEK_MAX && mo<T2_MONTH_MAX) out.push({key:"t2:"+d,tier:2,desc:"Target + 1 Bonus item"});
+  }
+  [addDays(ws,-7),ws].forEach(w=>{ if(weekHits(w)>=6 && !have("t3:"+w)) out.push({key:"t3:"+w,tier:3,desc:`Target hit 6 of 7 days (week of ${w})`}); });
+  [prevMonth(mk),mk].forEach(m=>{ if(tier4Earned(m) && !have("t4:"+m)) out.push({key:"t4:"+m,tier:4,desc:`Tier 3 earned every week ending in ${m}`}); });
+  return out;
+}
+function pickRand(a){ return a[Math.floor(Math.random()*a.length)]; }
+function claim(key){
+  const av=availableClaims().find(c=>c.key===key); if(!av) return;
+  const t=state.today, mk=monthKey(t.date), cap=tierCap(av.tier);
+  let pick=null, cost=0, capped=false;
+  const list=state.rewardBank.filter(r=>r.tier===av.tier);
+  if(list.length){ pick=pickRand(list); cost=Math.min(pick.cost||0,cap); }
+  if(!pick || monthSpent(mk)+cost>monthCap()){
+    const free=state.rewardBank.filter(r=>r.tier===1 && (r.cost||0)===0);
+    if(!free.length){
+      showCelebrate(`<div style="font-size:40px">🏦</div><div style="font-weight:900;font-size:18px;margin:8px 0">No reward available</div><div style="font-size:14px;opacity:.8">Add a Tier ${av.tier} reward (or a free Tier 1 one) in the Banks tab.</div>`);
+      return;
+    }
+    pick=pickRand(free); cost=0; capped=true;
+  }
+  const limitTxt = capped ? "free (monthly budget reached)" : ((pick.cost||0)>cap ? `up to RM${cap} (${state.rewardMode==="debt"?"debt mode cap":"tier cap"})` : (pick.limit||""));
+  const now=Date.now();
+  state.claimLog.push({id:uid(),key:av.key,tier:av.tier,label:pick.label,limit:limitTxt,cost,date:t.date,at:now,expiresAt:now+CLAIM_DAYS*864e5,used:false,capped});
+  t.claimed.push({label:pick.label,tier:av.tier,at:now});
+  save(); renderTracker(); confetti();
+  showCelebrate(`<div style="font-size:48px">🎁</div>
+    <div style="font-weight:900;font-size:20px;margin:8px 0;color:#fbbf24">TIER ${av.tier} REWARD!</div>
+    <div style="font-size:18px;font-weight:800;margin:10px 0">${esc(pick.label)}</div>
+    <div style="font-size:14px;opacity:.85">${esc(limitTxt)}</div>
+    <div style="font-size:13px;opacity:.7;margin-top:8px">Use it within ${CLAIM_DAYS} days.</div>`);
+}
+function markUsed(id){ const c=state.claimLog.find(x=>x.id===id); if(c){ c.used=true; save(); renderTracker(); } }
+
+/* ================= FLOW: PASTE / UPDATE ================= */
 function organize(){
   const text = document.getElementById("dumpInput").value;
   if(!text.trim()) return;
   const parsed = parseDump(text);
-  if(!parsed.tasks.length) return;
-  parsed.tasks.sort((a,b)=>(b.urgent?1:0)-(a.urgent?1:0) || b.weight-a.weight);
-  if(updateMode && state.today){
-    applyUpdate(parsed);
-    return;
-  }
-  const dups=[];
-  parsed.tasks.forEach(t=>{
-    const hit = state.taskBank.find(b=>similar(b.label,t.label));
-    if(hit) dups.push({taskId:t.id, bankId:hit.id, taskLabel:t.label, bankLabel:hit.label});
-  });
-  review = Object.assign(parsed,{dups});
-  renderReview();
-  show("review");
+  if(!parsed.tasks.length && !parsed.bonus.length) return;
+  if(!state.today) state.today=buildDay();
+  applyUpdate(parsed);
 }
 function applyUpdate(parsed){
-  const old = state.today;
-  /* carry over ticks + earned bonuses from the current day by matching labels */
-  parsed.tasks.forEach(nt=>{
-    const ot = old.tasks.find(o=>similar(o.label,nt.label));
+  const old=state.today;
+  const newTasks=[];
+  /* Foundation is app-managed: keep it, only copy [x] ticks from the paste */
+  old.tasks.filter(o=>o.group==="foundation").forEach(o=>{
+    const pf=parsed.tasks.find(p=>p.group==="foundation" && matchFund(p.label,o));
+    if(pf && pf.done && !fullyDone(o)){ o.done=true; o.subs.forEach(s=>s.done=true); }
+    newTasks.push(o);
+  });
+  parsed.tasks.filter(p=>p.group!=="foundation").forEach(nt=>{
+    const ak=autoKeyOf(nt.label);
+    if(ak){ const a=state.autoMissions.find(x=>x.key===ak); nt.auto=ak; nt.group="mission"; nt.category="Missions"; if(a) nt.label=autoLabel(a); }
+    if(nt.group==="task") nt.category="Tasks";
+    const ot=old.tasks.find(o=>o.group!=="foundation" && ((ak && o.auto===ak) || similar(baseLabel(o.label),baseLabel(nt.label))));
     if(ot){
       if(nt.subs.length){
-        nt.subs.forEach(ns=>{
-          const os=(ot.subs||[]).find(o=>similar(o.label,ns.label));
-          if(os && os.done) ns.done=true;
-        });
+        nt.subs.forEach(ns=>{ const os=(ot.subs||[]).find(o=>similar(o.label,ns.label)); if(os&&os.done) ns.done=true; });
         if(!ot.subs.length && ot.done) nt.subs.forEach(s=>s.done=true);
         nt.done = nt.subs.every(s=>s.done);
-      } else if(!nt.done && fullyDone(ot)){
-        nt.done=true;
-      }
+      } else if(!nt.done && fullyDone(ot)){ nt.done=true; }
       nt.bonusEarned = ot.bonusEarned || false;
+      nt.carried = ot.carried; nt.carryN = ot.carryN;
+      if(!nt.rank && ot.rank) nt.rank = ot.rank;
     }
+    newTasks.push(nt);
   });
-  parsed.bonus.forEach(nb=>{
-    const ob = old.bonus.find(o=>similar(o.label,nb.label));
-    if(ob && ob.done) nb.done=true;
+  droppedTasks = old.tasks.filter(o=>o.group!=="foundation" && !o.auto && !newTasks.some(n=>n.id===o.id) &&
+    !parsed.tasks.some(p=>similar(baseLabel(p.label),baseLabel(o.label)))).filter(o=>!fullyDone(o));
+  ensureAutos(newTasks);
+  const bonus=parsed.bonus.slice();
+  bonus.forEach(nb=>{
+    const ob=(old.bonus||[]).find(o=>similar(baseLabel(o.label),baseLabel(nb.label)));
+    if(ob){ if(ob.done) nb.done=true; nb.bonusEarned=ob.bonusEarned||false; }
   });
-  assignPoints(parsed.tasks);
-  parsed.rewards.forEach(r=>{
-    if(!state.rewardBank.some(x=>x.label.toLowerCase()===r.toLowerCase()))
-      state.rewardBank.push({id:uid(),label:r});
-  });
-  state.today.tasks = parsed.tasks;
-  state.today.bonus = parsed.bonus;
-  const doneB = parsed.bonus.filter(b=>b.done).length;
-  state.today.bonusEarnedCount = Math.max(state.today.bonusEarnedCount||0, doneB);
+  const day={tasks:newTasks,bonus};
+  normalizeMissions(day);
+  assignPoints(day.tasks);
+  old.tasks=day.tasks; old.bonus=day.bonus;
+  /* Task Bank lines in the paste, and bank items that are now in today */
+  parsed.bank.forEach(l=>{ if(!state.taskBank.some(b=>similar(baseLabel(b.label),baseLabel(l)))) state.taskBank.push({id:uid(),label:l,category:"Tasks",group:"task",weight:5,carryN:0,parked:true,subs:[]}); });
+  state.taskBank = state.taskBank.filter(b=>!old.tasks.some(t=>similar(baseLabel(t.label),baseLabel(b.label))));
   refreshRatchets();
-  updateMode=false;
+  updateMode=false; resetDumpUI();
   document.getElementById("dumpInput").value="";
   save(); renderTracker(); show("tracker");
+}
+function restoreDropped(){
+  if(!droppedTasks.length||!state.today) return;
+  droppedTasks.forEach(d=>state.today.tasks.push(d));
+  droppedTasks=[];
+  normalizeMissions(state.today); assignPoints(state.today.tasks);
+  save(); renderTracker();
 }
 function startUpdate(){
   updateMode=true;
@@ -565,186 +994,240 @@ function startUpdate(){
   document.getElementById("organizeBtn").textContent="🔄 Update My Day";
   show("dump");
 }
-function cancelUpdate(){
-  updateMode=false;
-  resetDumpUI();
-  show("tracker");
-}
+function cancelUpdate(){ updateMode=false; resetDumpUI(); show("tracker"); }
 function resetDumpUI(){
   document.getElementById("updateBanner").classList.add("hidden");
   document.getElementById("cancelUpdateBtn").classList.add("hidden");
-  document.getElementById("dumpTitle").textContent="🌅 Paste Your Day";
-  document.getElementById("organizeBtn").textContent="🚀 Organize My Day";
+  document.getElementById("dumpTitle").textContent="🌅 Paste Your List";
+  document.getElementById("organizeBtn").textContent="🔄 Update My Day";
 }
-function renderReview(){
-  const dupBox=document.getElementById("dupBox");
-  dupBox.innerHTML = review.dups.map((d,i)=>`
-    <div class="card" style="border:1px solid #f59e0b">
-      <div style="font-size:13px;margin-bottom:8px">⚠️ <b>"${esc(d.taskLabel)}"</b> looks like a duplicate of <b>"${esc(d.bankLabel)}"</b> in your Task Bank.</div>
-      <div style="display:flex;gap:8px">
-        <button class="small-btn" onclick="mergeDup(${i})">Merge into one</button>
-        <button class="small-btn" style="background:#374151" onclick="keepDup(${i})">Keep both</button>
-      </div>
-    </div>`).join("");
-  assignPoints(review.tasks);
-  document.getElementById("reviewList").innerHTML = review.tasks.map((t,i)=>`
-    <div class="row">
-      <div class="rank" style="background:${catColor(t.category)}">${i+1}</div>
-      <div style="flex:1"><div style="font-size:14px">${t.urgent?"⏰ ":""}${esc(t.label)}${t.deadlineMin!=null?' <span class="bonus-chip">⚡+3</span>':''}</div>
-      <div style="font-size:11px;opacity:.55">${esc(t.category)}${t.subs.length?` · ${t.subs.length} subtasks`:""}</div>
-      ${t.subs.map(s=>`<div style="font-size:12px;opacity:.7;padding-left:10px">− ${esc(s.label)}</div>`).join("")}</div>
-      <div style="font-size:13px;font-weight:800;color:#a78bfa">+${t.points}</div>
-      <button class="x-btn" onclick="removeReviewTask('${t.id}')">✕</button>
-    </div>`).join("");
-  toggleEl("reviewBonusCard", review.bonus.length>0);
-  document.getElementById("reviewBonus").innerHTML = review.bonus.map(b=>`<div style="font-size:14px;padding:4px 0">• ${esc(b.label)}</div>`).join("");
-  toggleEl("reviewRewardsCard", review.rewards.length>0);
-  document.getElementById("reviewRewards").innerHTML = review.rewards.map(r=>`<div style="font-size:14px;padding:4px 0">• ${esc(r)}</div>`).join("");
-  const usedBank = new Set(review.tasks.map(t=>t.fromBank).filter(Boolean));
-  const sugg = state.taskBank.filter(b=>!usedBank.has(b.id));
-  toggleEl("suggestCard", sugg.length>0);
-  document.getElementById("suggestList").innerHTML = sugg.map(b=>`
-    <div class="row"><div style="flex:1;font-size:14px">${esc(b.label)}</div>
-    <button class="plus-btn" onclick="addSuggestion('${b.id}')">+</button></div>`).join("");
-}
-function mergeDup(i){
-  const d=review.dups[i];
-  state.taskBank = state.taskBank.filter(b=>b.id!==d.bankId);
-  save(); review.dups.splice(i,1); renderReview();
-}
-function keepDup(i){ review.dups.splice(i,1); renderReview(); }
-function removeReviewTask(id){ review.tasks=review.tasks.filter(t=>t.id!==id); renderReview(); }
-function addSuggestion(bankId){
-  const b=state.taskBank.find(x=>x.id===bankId); if(!b) return;
-  review.tasks.push({id:uid(),label:b.label,category:b.category||"Other",weight:5,urgent:false,done:false,deadlineMin:parseDeadline(b.label),bonusEarned:false,subs:[],fromBank:b.id});
-  renderReview();
-}
-function backToDump(){ review=null; show("dump"); }
+function backToDump(){ show("dump"); }
+function startDay(){}
 
-function startDay(){
-  if(!review || !review.tasks.length) return;
-  review.tasks.sort((a,b)=>(b.urgent?1:0)-(a.urgent?1:0) || b.weight-a.weight);
-  assignPoints(review.tasks);
-  review.rewards.forEach(r=>{
-    if(!state.rewardBank.some(x=>x.label.toLowerCase()===r.toLowerCase()))
-      state.rewardBank.push({id:uid(),label:r});
-  });
-  const used = new Set(review.tasks.map(t=>t.fromBank).filter(Boolean));
-  state.taskBank = state.taskBank.filter(b=>!used.has(b.id));
-  state.today = {
-    date: todayStr(), tasks: review.tasks, bonus: review.bonus,
-    earned75:false, earned90:false, bonusEarnedCount: review.bonus.filter(b=>b.done).length, claimed:[]
-  };
-  refreshRatchets();
-  review=null;
-  document.getElementById("dumpInput").value="";
-  save(); renderTracker(); show("tracker");
+/* ================= TRACKER ACTIONS ================= */
+function toast(msg){
+  const el=document.getElementById("toast"); if(!el) return;
+  el.textContent=msg; el.classList.add("show");
+  clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove("show"),2600);
 }
-
-/* ================= TRACKER ================= */
+function checkAvoid(){
+  const t=state.today, m1=t.tasks.find(z=>z.group==="mission" && z.rank===1);
+  if(!m1 || fullyDone(m1)) return;
+  if(nowMin()>=16*60+30 && (t.nonMissionRun||0)>=3 && (t.avoidShown||0)<2){
+    t.avoidShown=(t.avoidShown||0)+1; t.nonMissionRun=0; t.avoidActive=true;
+  }
+}
+function afterTick(x, was, isMission){
+  updateDeadlineBonus(x); refreshRatchets();
+  const now=fullyDone(x), t=state.today;
+  if(!was && now){
+    if(isMission) t.nonMissionRun=0; else { t.nonMissionRun=(t.nonMissionRun||0)+1; checkAvoid(); }
+  }
+  save(); renderTracker();
+  if(!was && now && isMission){ confetti(); toast(`🔥 Mission done! You are at ${fmtP(points())}%`); }
+}
 function toggleTask(id){
   const t=state.today.tasks.find(x=>x.id===id); if(!t) return;
-  if(t.subs.length){
-    const target = !t.subs.every(s=>s.done);
-    t.subs.forEach(s=>s.done=target);
-    t.done = target;
-  } else {
-    t.done=!t.done;
-  }
-  updateDeadlineBonus(t);
-  refreshRatchets();
-  save(); renderTracker();
+  const was=fullyDone(t);
+  if(t.subs.length){ const target=!t.subs.every(s=>s.done); t.subs.forEach(s=>s.done=target); t.done=target; }
+  else t.done=!t.done;
+  afterTick(t,was,t.group==="mission");
 }
 function toggleSub(pid,sid){
   const t=state.today.tasks.find(x=>x.id===pid); if(!t) return;
   const s=t.subs.find(x=>x.id===sid); if(!s) return;
-  s.done=!s.done;
-  t.done=t.subs.every(x=>x.done);
-  updateDeadlineBonus(t);
-  refreshRatchets();
-  save(); renderTracker();
+  const was=fullyDone(t);
+  s.done=!s.done; t.done=t.subs.every(x=>x.done);
+  afterTick(t,was,t.group==="mission");
 }
 function toggleBonus(id){
   const b=state.today.bonus.find(x=>x.id===id); if(!b) return;
-  b.done=!b.done;
-  const doneB=state.today.bonus.filter(x=>x.done).length;
-  state.today.bonusEarnedCount=Math.max(state.today.bonusEarnedCount||0,doneB);
+  const was=!!b.done; b.done=!b.done;
+  afterTick(b,was,false);
+}
+function toggleGroup(g){ expanded[g]=!expanded[g]; renderTracker(); }
+function removeTask(id){
+  const t=state.today; if(!t) return;
+  const x=t.tasks.find(z=>z.id===id); if(!x) return;
+  const msg = x.fund ? `Remove "${baseLabel(x.label)}" from today?\n(It comes back tomorrow. Edit the Foundation list in Banks to stop that.)`
+            : x.auto ? `Remove "${baseLabel(x.label)}" from today?\n(It comes back tomorrow.)`
+            : `Remove "${baseLabel(x.label)}" from today?\n(It will not be carried forward.)`;
+  if(!confirm(msg)) return;
+  t.tasks=t.tasks.filter(z=>z.id!==id);
+  assignPoints(t.tasks); refreshRatchets();
   save(); renderTracker();
 }
-function renderTracker(){
+function removeBonus(id){
   const t=state.today; if(!t) return;
-  const p=points(), pct=Math.round(p);
-  document.getElementById("dPoints").textContent=`${p} / 100`;
-  document.getElementById("dPct").textContent=pct+"%";
-  const totalTasks=t.tasks.length, doneTasks=t.tasks.filter(fullyDone).length;
-  document.getElementById("dTasks").textContent=`${doneTasks} / ${totalTasks}`;
-  const ca=claimsAvail(), ct=claimsTotal();
-  document.getElementById("dReward").textContent = ca>0?`🎁 ${ca}`:(ct>0?`✓ ${ct}`:"🔒");
-  document.getElementById("pBar").style.width=Math.min(100,pct)+"%";
-  document.getElementById("pTxt").textContent=pct+"%";
-  document.getElementById("milestone").textContent =
-    pct>=100?"🏆 MAIN MISSION COMPLETE": pct>=75?"🎁 Reward Zone": pct>=50?"🔥 Halfway There": pct>=25?"💪 Building Momentum":"🚩 Getting Started";
-  const cats=[...new Set(t.tasks.map(x=>x.category))];
-  document.getElementById("catList").innerHTML = cats.map(cat=>{
-    const ts=t.tasks.filter(x=>x.category===cat);
-    const cp=ts.reduce((s,x)=>s+x.points,0), cd=ts.reduce((s,x)=>s+earnedPts(x),0);
-    return `<div class="card">
-      <div class="cat-header"><div style="font-weight:800;font-size:15px">${esc(cat)}</div><div class="cat-counter">${cd} / ${cp}</div></div>
-      <div class="cat-bar-wrap"><div class="cat-bar" style="background:${catColor(cat)};width:${cp?Math.min(100,cd/cp*100):0}%"></div></div>
-      ${ts.map(x=>taskBlock(x)).join("")}
-    </div>`;
-  }).join("");
-  toggleEl("bonusCard", t.bonus.length>0);
-  document.getElementById("bonusList").innerHTML = t.bonus.map(b=>`
-    <div class="task ${b.done?"done":""}" onclick="toggleBonus('${b.id}')">
-      <div class="checkbox ${b.done?"checked":""}">${b.done?"✓":""}</div>
-      <div class="task-label">${esc(b.label)}</div>
-    </div>`).join("");
-  const v=document.getElementById("vaultCard");
-  const claimedHtml=(t.claimed||[]).map(c=>`<div style="font-size:14px;font-weight:700;padding:6px;border-radius:10px;background:rgba(0,0,0,0.15);margin-bottom:6px">✅ ${esc(c.label)}</div>`).join("");
-  if(ca>0){
-    v.className="card vault-ready";
-    v.innerHTML=`<div style="font-weight:900;font-size:15px;margin-bottom:6px">🎁 ${ca} REWARD${ca>1?"S":""} READY</div>
-      <div style="font-size:12.5px;opacity:.85;margin-bottom:10px">75% = 1 claim · 90% = +1 · each bonus = +1</div>
-      ${claimedHtml}<button class="claim-btn" onclick="claim()">🎉 CLAIM REWARD</button>`;
-  } else {
-    v.className="card vault-locked";
-    v.innerHTML=`<div style="font-weight:900;font-size:15px;margin-bottom:6px">🔒 REWARD VAULT</div>
-      <div style="font-size:12.5px;opacity:.85;margin-bottom:${claimedHtml?"10px":"0"}">75% = 1 claim · 90% = +1 · each bonus = +1</div>${claimedHtml}`;
-  }
+  t.bonus=t.bonus.filter(b=>b.id!==id); save(); renderTracker();
 }
-function taskBlock(x){
-  const fd=fullyDone(x);
-  const someDone = x.subs.length && x.subs.some(s=>s.done) && !fd;
-  let html = `<div class="task ${fd?"done":""}" onclick="toggleTask('${x.id}')">
-    <div class="checkbox ${fd?"checked":""} ${someDone?"half":""}">${fd?"✓":(someDone?"−":"")}</div>
-    <div class="task-label">${x.urgent?"⏰ ":""}${esc(x.label)}${x.deadlineMin!=null?` <span class="bonus-chip">${x.bonusEarned?"⚡+3 earned!":"⚡+3 if on time"}</span>`:""}</div>
-    <div class="task-points">+${x.points}${fd&&x.bonusEarned?`<span class="bonus-chip">+${BONUS_PTS}</span>`:""}</div>
+function quickAddTask(){
+  const i=document.getElementById("quickTask"); const v=i.value.trim();
+  if(!v||!state.today) return;
+  state.today.tasks.push(mkTask({label:v,deadlineMin:parseDeadline(v)}));
+  assignPoints(state.today.tasks); i.value="";
+  save(); renderTracker();
+}
+function addFromBank(id){
+  const b=state.taskBank.find(x=>x.id===id); if(!b||!state.today) return;
+  state.taskBank=state.taskBank.filter(x=>x.id!==id);
+  state.today.tasks.push(mkTask({label:b.label,category:b.category||"Tasks",group:b.group||"task",rank:b.rank||0,weight:b.weight||5,
+    deadlineMin:parseDeadline(b.label),subs:(b.subs||[]).map(l=>({id:uid(),label:l,done:false,pts:0}))}));
+  normalizeMissions(state.today); assignPoints(state.today.tasks);
+  save(); renderTracker();
+}
+
+/* ================= RENDER: TRACKER ================= */
+function dispLabel(s){ return baseLabel(s); }
+function chipsHtml(x){
+  let c="";
+  if(hasHard(x.label)) c+=`<span class="chip ${fullyDone(x)?"on":""}">🔥 +3</span>`;
+  if(x.deadlineMin!=null) c+=`<span class="chip ${x.bonusEarned?"on":""}">⏰ +3 before ${fmtTime(x.deadlineMin)}</span>`;
+  return c;
+}
+function rowHtml(x, o){
+  o=o||{};
+  const fd=fullyDone(x), some=x.subs.length && x.subs.some(s=>s.done) && !fd;
+  const meta=(x.when||x.why)?`<div class="meta">${esc([x.when,x.why].filter(Boolean).join(" · "))}</div>`:"";
+  const carry=(x.carried && x.carryN)?`<span class="chip carry">↪${x.carryN}</span> `:"";
+  const ch=chipsHtml(x);
+  let h=`<div class="task ${fd?"done":""} ${o.big?"big":""}" onclick="toggleTask('${x.id}')">
+    <div class="checkbox ${o.big?"big":""} ${fd?"checked":""} ${some?"half":""}">${fd?"✓":(some?"−":"")}</div>
+    <div class="task-label ${o.big?"big":""}">${carry}${esc(dispLabel(x.label))}${ch?`<div class="chips">${ch}</div>`:""}${meta}</div>
+    <div class="task-points">${fmtP(x.points)} pts</div>
+    <button class="x-btn" onclick="event.stopPropagation();removeTask('${x.id}')" aria-label="Remove">✕</button>
   </div>`;
-  html += x.subs.map(s=>`
+  h+=x.subs.map(s=>`
     <div class="task sub ${s.done?"done":""}" onclick="event.stopPropagation();toggleSub('${x.id}','${s.id}')">
       <div class="checkbox small ${s.done?"checked":""}">${s.done?"✓":""}</div>
       <div class="task-label">${esc(s.label)}</div>
-      <div class="task-points">+${s.pts}</div>
+      <div class="task-points">${fmtP(s.pts)}</div>
     </div>`).join("");
-  return html;
+  return h;
 }
-function claim(){
-  if(claimsAvail()<=0) return;
-  if(!state.rewardBank.length){
-    showCelebrate(`<div style="font-size:40px">🏦</div><div style="font-weight:900;font-size:18px;margin:8px 0">Reward Bank is empty!</div>
-      <div style="font-size:14px;opacity:.8">Add rewards in the Banks tab, then come back and claim.</div>`);
-    return;
-  }
-  const pick=state.rewardBank[Math.floor(Math.random()*state.rewardBank.length)];
-  state.rewardBank=state.rewardBank.filter(r=>r.id!==pick.id);
-  state.today.claimed.push({label:pick.label,at:Date.now()});
-  save(); renderTracker();
-  confetti();
-  showCelebrate(`<div style="font-size:48px">🎁</div>
-    <div style="font-weight:900;font-size:20px;margin:8px 0;color:#fbbf24">REWARD UNLOCKED!</div>
-    <div style="font-size:18px;font-weight:800;margin:10px 0">${esc(pick.label)}</div>
-    <div style="font-size:13px;opacity:.75">You earned it. Enjoy it guilt-free. 💪</div>`);
+function groupCard(key,title,tasks,pool,emptyMsg){
+  const earned=r1(tasks.reduce((s,x)=>s+basePts(x),0));
+  const allDone=tasks.length>0 && tasks.every(fullyDone);
+  const collapsed=allDone && !expanded[key];
+  const pct=pool?Math.min(100,earned/pool*100):0;
+  return `<div class="card">
+    <div class="cat-header" onclick="toggleGroup('${key}')" style="cursor:pointer">
+      <div style="font-weight:800;font-size:15px">${allDone?"✅ ":""}${esc(title)}</div>
+      <div class="cat-counter">${fmtP(earned)} / ${pool}</div></div>
+    <div class="cat-bar-wrap"><div class="cat-bar" style="background:${catColor(title)};width:${pct}%"></div></div>
+    ${collapsed?`<div class="muted" style="margin:0">All done. Tap to open.</div>`
+      : (tasks.length? tasks.map(x=>rowHtml(x)).join("") : `<div class="muted" style="margin:0">${emptyMsg||""}</div>`)}
+  </div>`;
+}
+function missionCard(rank,t,nextUpRank){
+  const pts=MISSION_PTS[rank-1];
+  if(!t) return `<div class="card slot-empty">M${rank} slot is empty today · ${pts} pts not available</div>`;
+  const fd=fullyDone(t), collapsed=fd && !expanded["m"+rank];
+  const cls=`card mission ${rank===1?"m1":""} ${(rank===nextUpRank && !fd)?"next-up":""}`;
+  const tags=`<div class="mtags"><span class="mrank">M${rank}</span>${rank===1?`<span class="start-tag">START HERE · Hard task first</span>`:""}${(rank===nextUpRank && !fd)?`<span class="next-tag">NEXT UP</span>`:""}</div>`;
+  if(collapsed) return `<div class="${cls}" onclick="toggleGroup('m${rank}')" style="cursor:pointer">${tags}<div class="muted" style="margin:6px 0 0">✅ ${esc(dispLabel(t.label))} · done. Tap to open.</div></div>`;
+  return `<div class="${cls}">${tags}${rowHtml(t,{big:rank===1})}</div>`;
+}
+function renderTracker(){
+  const t=state.today; if(!t) return;
+  const tot=totals(), p=tot.total, tg=state.target;
+  const ms=t.tasks.filter(x=>x.group==="mission");
+  const byRank=r=>ms.find(x=>x.rank===r);
+  const nextUp=[1,2,3].find(r=>byRank(r) && !fullyDone(byRank(r))) || 0;
+  /* top bar */
+  const reached=p>=tg-1e-9;
+  const toGo = reached ? (t.bonusEver ? "Tier 2 ✓" : "Tier 1 ✓ · tick 1 Bonus for Tier 2") : `${fmtP(Math.max(0,r1(tg-p)))} pts to Tier 1`;
+  document.getElementById("topBar").innerHTML=`<div><div style="font-size:11px;opacity:.7">TODAY</div><div style="font-size:22px;font-weight:900">${fmtP(p)}%</div></div>
+    <div style="text-align:right"><div style="font-size:14px;font-weight:800;color:${reached?"#34d399":"#fbbf24"}">${toGo}</div><div style="font-size:11px;opacity:.7">Target ${tg}%</div></div>`;
+  /* banners */
+  let b="";
+  if(state.note) b+=`<div class="banner calm">${esc(state.note)}<button class="x-btn" onclick="dismissMsg('note')">✕</button></div>`;
+  if(state.progress.deloadBanner) b+=`<div class="banner calm">Too much load. Cut Tasks or Bonus, keep M1. (Target is ${tg}%.)<button class="x-btn" onclick="dismissMsg('deload')">✕</button></div>`;
+  if(state.progress.msg) b+=`<div class="banner good">${esc(state.progress.msg)}<button class="x-btn" onclick="dismissMsg('level')">✕</button></div>`;
+  if(t.avoidActive){ const m1=byRank(1); b+=`<div class="banner calm">Straight, not right. M1 is worth ${m1?fmtP(m1.points):20} pts.<button class="x-btn" onclick="dismissMsg('avoid')">✕</button></div>`; }
+  if(droppedTasks.length) b+=`<div class="banner calm">${droppedTasks.length} unfinished task${droppedTasks.length>1?"s were":" was"} not in your pasted list and removed. <button class="small-btn" onclick="restoreDropped()">Restore</button><button class="x-btn" onclick="dismissMsg('dropped')">✕</button></div>`;
+  document.getElementById("banners").innerHTML=b;
+  /* dashboard */
+  document.getElementById("dPoints").textContent=`${fmtP(p)} / 100`;
+  document.getElementById("dPct").textContent=fmtP(p)+"%";
+  const slots=ms.length;
+  document.getElementById("dTasks").textContent=`${ms.filter(fullyDone).length} / ${Math.max(slots,1)}`;
+  const av=availableClaims().length, unused=state.claimLog.filter(c=>!c.used && c.expiresAt>Date.now()).length;
+  document.getElementById("dReward").textContent = av>0?`🎁 ${av}`:(unused>0?`✓ ${unused}`:"🔒");
+  document.getElementById("pBar").style.width=Math.min(100,p)+"%";
+  document.getElementById("pTxt").textContent=fmtP(p)+"%";
+  document.getElementById("milestone").textContent =
+    p>=100?"🏆 FULL DAY": reached?"🎁 Tier 1 unlocked": p>=tg-25?"🔥 Close to target": p>=25?"💪 Building Momentum":"🚩 Getting Started";
+  document.getElementById("weekStrip").innerHTML=weekStripHtml();
+  /* 1 Missions */
+  let html=[1,2,3].map(r=>missionCard(r,byRank(r),nextUp)).join("");
+  /* 2 Foundation (time-of-day order) */
+  const fnd=t.tasks.filter(x=>x.group==="foundation").map((x,i)=>({x,i})).sort((a,b)=>(a.x.slot==null?1:a.x.slot)-(b.x.slot==null?1:b.x.slot)||a.i-b.i).map(o=>o.x);
+  html+=groupCard("foundation","Foundation",fnd,POOL.foundation,"No Foundation items today.");
+  /* 3 Tasks (soonest deadline, then weight) */
+  const tk=t.tasks.filter(x=>x.group==="task").sort((a,b)=>(a.deadlineMin==null?1e9:a.deadlineMin)-(b.deadlineMin==null?1e9:b.deadlineMin)||(b.weight||0)-(a.weight||0));
+  html+=groupCard("tasks","Tasks",tk,POOL.task,"No tasks today, so these 20 pts are awarded automatically.");
+  html+=`<div class="card"><div style="display:flex;gap:8px">
+      <input type="text" id="quickTask" placeholder="Quick add a task…" onkeydown="if(event.key==='Enter')quickAddTask()">
+      <button class="plus-btn" onclick="quickAddTask()">+</button></div></div>`;
+  document.getElementById("catList").innerHTML=html;
+  /* 4 Bonus */
+  toggleEl("bonusCard", t.bonus.length>0);
+  document.getElementById("bonusList").innerHTML=t.bonus.map(bb=>{
+    const ch=chipsHtml(bb);
+    return `<div class="task ${bb.done?"done":""}" onclick="toggleBonus('${bb.id}')">
+      <div class="checkbox ${bb.done?"checked":""}">${bb.done?"✓":""}</div>
+      <div class="task-label">${esc(dispLabel(bb.label))}${ch?`<div class="chips">${ch}</div>`:""}</div>
+      <div class="task-points">0 pts</div>
+      <button class="x-btn" onclick="event.stopPropagation();removeBonus('${bb.id}')" aria-label="Remove">✕</button>
+    </div>`;}).join("");
+  /* 5 Task Bank (collapsed) */
+  const bank=document.getElementById("bankToday");
+  bank.classList.toggle("hidden", state.taskBank.length===0);
+  bank.innerHTML=`<summary>📥 Task Bank (${state.taskBank.length}) · 0 pts</summary>`+state.taskBank.map(x=>`
+    <div class="row"><div style="flex:1;font-size:14px">${esc(dispLabel(x.label))}${x.carryN>=3?` <span class="chip carry">↪${x.carryN}</span>`:""}</div>
+    <button class="plus-btn" onclick="addFromBank('${x.id}')">+</button></div>`).join("");
+  renderVault();
+}
+function renderVault(){
+  const t=state.today, v=document.getElementById("vaultCard");
+  const claims=availableClaims(), now=Date.now();
+  const mk=monthKey(t.date), spent=monthSpent(mk), cap=monthCap();
+  const unused=state.claimLog.filter(c=>!c.used && c.expiresAt>now);
+  const expired=state.claimLog.filter(c=>!c.used && c.expiresAt<=now && monthKey(c.date)===mk).length;
+  const modeTxt=state.rewardMode==="debt"?"Debt mode":"Budget B";
+  let h=`<div style="font-weight:900;font-size:15px;margin-bottom:6px">${claims.length?`🎁 ${claims.length} REWARD${claims.length>1?"S":""} READY`:"🔒 REWARD VAULT"}</div>`;
+  h+=claims.map(c=>`<div class="claimrow"><div style="flex:1;text-align:left"><div style="font-weight:800">Tier ${c.tier}</div><div style="font-size:12px;opacity:.8">${esc(c.desc)} · up to RM${tierCap(c.tier)}</div></div><button class="claim-btn" onclick="claim('${c.key}')">CLAIM</button></div>`).join("");
+  if(!claims.length) h+=`<div style="font-size:12.5px;opacity:.8;margin-bottom:8px">Tier 1: reach ${state.target}% · Tier 2: ${state.target}% + 1 Bonus · Tier 3: target on 6 of 7 days · Tier 4: Tier 3 every week of the month</div>`;
+  if(unused.length) h+=`<div style="text-align:left;margin-top:10px"><div style="font-size:12px;font-weight:800;opacity:.8;margin-bottom:4px">UNUSED (use within ${CLAIM_DAYS} days)</div>`+unused.map(c=>{
+    const d=Math.max(0,Math.ceil((c.expiresAt-now)/864e5));
+    return `<div class="row" style="font-size:13px"><div style="flex:1">T${c.tier} · ${esc(c.label)} <span style="opacity:.6">· ${esc(c.limit||"")} · ${d} day${d===1?"":"s"} left</span></div><button class="small-btn" onclick="markUsed('${c.id}')">Used</button></div>`;}).join("")+`</div>`;
+  h+=`<div style="font-size:12px;opacity:.75;margin-top:10px">${modeTxt}: RM${fmtP(spent)} / RM${cap} this month${expired?` · ${expired} expired`:""}</div>`;
+  v.className = claims.length ? "card vault-ready" : "card vault-locked";
+  v.innerHTML=h;
+}
+
+/* ================= STATUS / BACKUP ================= */
+function copyStatus(){
+  const t=state.today; if(!t) return;
+  const tk=t.tasks.filter(x=>!x.fund && !x.auto);
+  const done=tk.filter(fullyDone), not=tk.filter(x=>!fullyDone(x));
+  const fnd=t.tasks.filter(x=>x.fund), fd=fnd.filter(fullyDone).length;
+  const au=t.tasks.filter(x=>x.auto);
+  let out=`Daily Mission status — ${t.date}\nDay score: ${fmtP(points())}% (target ${state.target}%)\nFoundation: ${fd} of ${fnd.length} done (app adds these daily, no need to list them)\n\nDONE:\n`;
+  out+= done.length? done.map(x=>`* ${x.label}`).join("\n")+"\n" : "(none)\n";
+  out+=`\nNOT DONE (carry forward — keep exact wording):\n`;
+  out+= not.length? not.map(x=>`* ${x.label}`+(x.subs.length? "\n"+x.subs.map(s=>`  - ${s.done?"[x] ":""}${s.label}`).join("\n"):"" )).join("\n")+"\n" : "(none)\n";
+  if(au.length) out+=`\nAUTO MISSIONS (the app adds these every day):\n`+au.map(x=>`* ${fullyDone(x)?"[x] ":""}${x.label}`).join("\n")+"\n";
+  if(t.bonus.length) out+=`\nBONUS:\n`+t.bonus.map(b=>`* ${b.done?"[x] ":""}${b.label}`).join("\n")+"\n";
+  out+=`\nPlease build tomorrow's list: keep the exact wording of carried-forward tasks, add my new tasks, re-rank and re-weight everything.`;
+  navigator.clipboard.writeText(out).then(()=>{
+    showCelebrate(`<div style="font-size:40px">📤</div><div style="font-weight:900;font-size:18px;margin:8px 0">Status copied!</div>
+      <div style="font-size:14px;opacity:.8">Paste it into your Claude Project with tomorrow's new tasks, then paste the reply back here.</div>`);
+  }).catch(()=>{
+    showCelebrate(`<div style="font-weight:900;font-size:16px;margin-bottom:8px">📤 Your status — tap, Select All, Copy:</div>
+      <textarea readonly style="min-height:180px;font-size:12px">${esc(out)}</textarea>`);
+  });
 }
 function confetti(){
   const colors=["#fbbf24","#a78bfa","#34d399","#f472b6","#60a5fa"];
@@ -761,47 +1244,21 @@ function confetti(){
     setTimeout(()=>d.remove(),5000);
   }
 }
+
 function showCelebrate(html){
   document.getElementById("celebrateBox").innerHTML=html+`<button class="big-btn" style="margin-top:16px" onclick="hideCelebrate()">Nice!</button>`;
   document.getElementById("celebrateOverlay").classList.add("show");
 }
+
 function hideCelebrate(){ document.getElementById("celebrateOverlay").classList.remove("show"); }
 
-function copyStatus(){
-  const t=state.today; if(!t) return;
-  const done=t.tasks.filter(fullyDone), not=t.tasks.filter(x=>!fullyDone(x));
-  let out=`Daily Mission status — ${t.date}\n\nDONE:\n`;
-  out+= done.length? done.map(x=>`* ${x.label}`).join("\n")+"\n" : "(none)\n";
-  out+=`\nNOT DONE (carry forward — keep exact wording):\n`;
-  out+= not.length? not.map(x=>`* ${x.label}`+ (x.subs.length? "\n"+x.subs.map(s=>`  - ${s.done?"[x] ":""}${s.label}`).join("\n"):"" )).join("\n")+"\n" : "(none)\n";
-  if(t.bonus.length){
-    out+=`\nBONUS:\n`+t.bonus.map(b=>`* ${b.done?"[x] ":""}${b.label}`).join("\n")+"\n";
-  }
-  out+=`\nPlease build tomorrow's list: keep the exact wording of carried-forward tasks, add my new tasks, re-rank and re-weight everything.`;
-  navigator.clipboard.writeText(out).then(()=>{
-    showCelebrate(`<div style="font-size:40px">📤</div><div style="font-weight:900;font-size:18px;margin:8px 0">Status copied!</div>
-      <div style="font-size:14px;opacity:.8">Paste it into your Claude Project with tomorrow's new tasks, then paste the reply back here.</div>`);
-  }).catch(()=>{
-    showCelebrate(`<div style="font-weight:900;font-size:16px;margin-bottom:8px">📤 Your status — tap, Select All, Copy:</div>
-      <textarea readonly style="min-height:180px;font-size:12px">${esc(out)}</textarea>`);
-  });
+async function copyBackup(){
+  const code=JSON.stringify(state);
+  const msg=document.getElementById("backupMsg");
+  try{ await navigator.clipboard.writeText(code); msg.textContent="✓ Copied! Paste it into Notes to keep it safe."; }
+  catch(e){ document.getElementById("backupBox").value=code; msg.textContent="Code is in the box — tap it, Select All, Copy."; }
 }
-function askEndDay(){ document.getElementById("endOverlay").classList.add("show"); }
-function hideEnd(){ document.getElementById("endOverlay").classList.remove("show"); }
-function endDay(){
-  archiveDay();
-  save(); hideEnd(); resetDumpUI(); show("dump"); renderAll();
-}
-function archiveDay(){
-  const t=state.today; if(!t) return;
-  const p=points();
-  t.tasks.filter(x=>!fullyDone(x)).forEach(x=>{
-    if(!state.taskBank.some(b=>b.label.toLowerCase()===x.label.toLowerCase()))
-      state.taskBank.push({id:uid(),label:x.label,category:x.category});
-  });
-  state.history.push({date:t.date,percent:Math.round(p),done:t.tasks.filter(fullyDone).length,total:t.tasks.length,claimed:(t.claimed||[]).map(c=>c.label)});
-  state.today=null;
-}
+
 
 /* ================= BANKS ================= */
 function renderCloudCard(){
@@ -819,48 +1276,102 @@ function renderCloudCard(){
       <div class="muted">You're on local-only storage (this device/browser only). Ask Claude for the Supabase setup steps, then paste your Project URL and anon key into the SUPABASE_URL / SUPABASE_ANON_KEY constants near the top of index.html and re-upload.</div>`;
   }
 }
+
+function limitShown(r){
+  const cap=tierCap(r.tier);
+  return (r.cost||0)>cap ? `${esc(r.limit||"")} → RM${cap} (${state.rewardMode==="debt"?"debt mode cap":"tier cap"})` : esc(r.limit||"");
+}
 function renderBanks(){
   renderCloudCard();
-  document.getElementById("rewardBankList").innerHTML=state.rewardBank.map(r=>`
-    <div class="row"><div style="flex:1;font-size:14px">${esc(r.label)}</div>
-    <button class="x-btn" onclick="delReward('${r.id}')">✕</button></div>`).join("")||`<div class="muted">Empty — add rewards below or in your morning paste.</div>`;
+  const mk=monthKey(todayStr());
+  document.getElementById("modeCard").innerHTML=`<div class="card-title">💰 Reward Budget</div>
+    <div class="muted">${state.rewardMode==="debt"?`<b>Debt mode</b>: max RM570/month on rewards until the RM5,000 debt is 0. Tier caps: T1 RM5, T2 RM15, T3 RM40, T4 RM100. Send the ~RM240 saved to the debt each month.`:`<b>Budget B</b>: max RM810/month. Tier caps: T1 RM5, T2 RM20, T3 RM60, T4 RM200.`}</div>
+    <div style="font-size:13px;margin-bottom:10px">This month: <b>RM${fmtP(monthSpent(mk))}</b> / RM${monthCap()}</div>
+    <button class="big-btn grey" onclick="toggleMode()">${state.rewardMode==="debt"?"Debt is cleared → switch to Budget B":"Back to Debt mode"}</button>`;
+  let rb="";
+  for(let tier=1;tier<=4;tier++){
+    const rs=state.rewardBank.filter(r=>r.tier===tier);
+    rb+=`<div style="font-weight:800;font-size:13px;margin:12px 0 4px;color:#fbbf24">TIER ${tier} · cap RM${tierCap(tier)}</div>`+
+      (rs.map(r=>`<div class="row"><div style="flex:1;font-size:14px">${esc(r.label)} <span style="font-size:11px;opacity:.55">· ${limitShown(r)}</span></div><button class="x-btn" onclick="delReward('${r.id}')">✕</button></div>`).join("")||`<div class="muted">Empty</div>`);
+  }
+  document.getElementById("rewardBankList").innerHTML=rb;
+  document.getElementById("fundList").innerHTML=(state.fundamentals||[]).map(f=>`
+    <div class="row"><div style="flex:1;font-size:14px">${esc(f.label)} <span style="font-size:11px;opacity:.5">· w${f.weight||5}${(f.subs&&f.subs.length)?` · ${f.subs.length} steps`:""} · ${["morning","all day","night"][f.slot==null?1:f.slot]}</span></div>
+    <button class="x-btn" onclick="delFund('${f.id}')">✕</button></div>`).join("")||`<div class="muted">Empty — add some below.</div>`;
   document.getElementById("taskBankList").innerHTML=state.taskBank.map(b=>`
-    <div class="row"><div style="flex:1;font-size:14px">${esc(b.label)} <span style="font-size:11px;opacity:.5">· ${esc(b.category||"Other")}</span></div>
+    <div class="row"><div style="flex:1;font-size:14px">${esc(dispLabel(b.label))} <span style="font-size:11px;opacity:.5">· ${b.parked?"parked":"carries tomorrow"}${b.carryN?` · ↪${b.carryN}`:""}</span></div>
     <button class="x-btn" onclick="delBankTask('${b.id}')">✕</button></div>`).join("")||`<div class="muted">Empty — unfinished tasks land here automatically.</div>`;
 }
+function toggleMode(){ state.rewardMode=state.rewardMode==="debt"?"b":"debt"; save(); renderBanks(); }
 function addReward(){
-  const i=document.getElementById("newReward");
+  const i=document.getElementById("newReward"), l=document.getElementById("newRewardLimit"), tr=document.getElementById("newRewardTier");
   if(!i.value.trim()) return;
-  state.rewardBank.push({id:uid(),label:i.value.trim()}); i.value="";
+  state.rewardBank.push({id:uid(),tier:+tr.value,label:i.value.trim(),limit:l.value.trim(),cost:parseCost(l.value)});
+  i.value=""; l.value="";
   save(); renderBanks();
 }
 function delReward(id){ state.rewardBank=state.rewardBank.filter(r=>r.id!==id); save(); renderBanks(); }
 function addBankTask(){
   const i=document.getElementById("newBankTask");
   if(!i.value.trim()) return;
-  state.taskBank.push({id:uid(),label:i.value.trim(),category:"Other"}); i.value="";
+  state.taskBank.push({id:uid(),label:i.value.trim(),category:"Tasks",group:"task",weight:5,carryN:0,parked:true,subs:[]}); i.value="";
   save(); renderBanks();
 }
 function delBankTask(id){ state.taskBank=state.taskBank.filter(b=>b.id!==id); save(); renderBanks(); }
-
-async function copyBackup(){
-  const code=JSON.stringify(state);
-  const msg=document.getElementById("backupMsg");
-  try{ await navigator.clipboard.writeText(code); msg.textContent="✓ Copied! Paste it into Notes to keep it safe."; }
-  catch(e){ document.getElementById("backupBox").value=code; msg.textContent="Code is in the box — tap it, Select All, Copy."; }
+function addFund(){
+  const i=document.getElementById("newFund"); const v=i.value.trim(); if(!v) return;
+  state.fundamentals.push({id:uid(),label:v,weight:5,slot:1,subs:[],when:"",why:""}); i.value=""; save(); renderBanks();
+}
+function delFund(id){ state.fundamentals=state.fundamentals.filter(f=>f.id!==id); save(); renderBanks(); }
+function parseFund(text){
+  const out=[]; let cur=null;
+  text.split(/\n/).forEach(raw=>{
+    const l=raw.trim(); if(!l) return;
+    let m;
+    if((m=l.match(/^when\s*:\s*(.+)/i))&&cur){ cur.when=m[1]; return; }
+    if((m=l.match(/^why\s*:\s*(.+)/i))&&cur){ cur.why=m[1]; return; }
+    if(/^subtasks?\s*:?$/i.test(l)) return;
+    if(/^[-•·*]\s+/.test(l)){ const t=l.replace(/^[-•·*]\s+/,"").trim(); if(cur&&t) cur.subs.push(t); return; }
+    let label=l.replace(/^\d+[.)]\s*/,"");
+    let w=5; const wm=label.match(/\(\s*weight\s*(\d+)\s*\)/i);
+    if(wm){ w=Math.min(10,+wm[1]); label=label.replace(wm[0],""); }
+    label=label.replace(/\[(\d+)\]/,(x,n)=>{w=+n;return "";}).replace(/[\s,]+$/,"").trim();
+    if(label){ cur={id:uid(),label,weight:w,when:"",why:"",subs:[],slot:1}; if(/^workout/i.test(label)) cur.key="workout"; out.push(cur); }
+  });
+  out.forEach(f=>{ const x=(f.when+" "+f.label).toLowerCase(); f.slot = /night|bed time|sleep|wind-down/.test(x)?2 : /morning|wake|waking|breakfast|shower|bed\b/.test(x)?0 : 1; });
+  return out;
+}
+function bulkFund(){
+  const ta=document.getElementById("bulkFund");
+  const items=parseFund(ta.value);
+  if(!items.length) return;
+  state.fundamentals=items;
+  ta.value=""; save(); renderBanks();
+}
+function addFundToday(){
+  if(!state.today){ state.today=buildDay(); }
+  else {
+    state.fundamentals.forEach(f=>{
+      const nt=makeFundTask(f);
+      if(!state.today.tasks.some(t=>t.group==="foundation" && matchFund(t.label,nt))) state.today.tasks.push(nt);
+    });
+    assignPoints(state.today.tasks);
+  }
+  save(); renderAll(); setTab("today");
 }
 function restoreBackup(){
   const msg=document.getElementById("backupMsg");
   try{
     const parsed=JSON.parse(document.getElementById("backupBox").value);
     if(!parsed||typeof parsed!=="object"||!("taskBank" in parsed)) throw 0;
-    state=Object.assign({taskBank:[],rewardBank:[],today:null,history:[]},parsed);
+    state=Object.assign({taskBank:[],rewardBank:[],today:null,history:[],fundamentals:null},parsed); ensureShape();
     if(state.today && state.today.tasks) state.today.tasks.forEach(t=>{ if(!t.subs) t.subs=[]; });
     save(); renderAll(); setTab("today");
     msg.textContent="✓ Restored!";
     document.getElementById("backupBox").value="";
   }catch(e){ msg.textContent="That code doesn't look right — paste the full backup."; }
 }
+
 
 /* ================= STATS ================= */
 function renderStats(){
@@ -869,29 +1380,31 @@ function renderStats(){
   document.getElementById("s7").textContent=avg(h.slice(-7))+"%";
   document.getElementById("s30").textContent=avg(h.slice(-30))+"%";
   document.getElementById("sAll").textContent=avg(h)+"%";
-  let streak=0;
-  for(let i=h.length-1;i>=0;i--){ if(h[i].percent>=75) streak++; else break; }
-  document.getElementById("sStreak").textContent=streak+" 🔥";
+  document.getElementById("sStreak").textContent=state.target+"%";
+  document.getElementById("statWeek").innerHTML=weekStripHtml();
   const last=h.slice(-14);
   document.getElementById("chart").innerHTML = last.length ?
     `<div style="display:flex;align-items:flex-end;gap:4px;height:110px">`+
     last.map(x=>`<div style="flex:1;text-align:center">
-      <div style="height:${Math.max(4,Math.min(100,x.percent))}px;background:${x.percent>=75?"linear-gradient(180deg,#34d399,#10b981)":"#4b5563"};border-radius:4px"></div>
+      <div style="height:${Math.max(4,Math.min(100,x.percent))}px;background:${isHit(x)?"linear-gradient(180deg,#34d399,#10b981)":"#4b5563"};border-radius:4px"></div>
       <div style="font-size:8px;opacity:.5;margin-top:2px">${x.date.slice(8)}</div></div>`).join("")+`</div>`
     : `<div class="muted">Finish your first day to see history here.</div>`;
   document.getElementById("histList").innerHTML=[...h].map((x,i)=>({x,i})).reverse().map(({x,i})=>`
-    <div class="row" style="font-size:13px"><div style="flex:1"><b>${x.date}</b> — ${x.done}/${x.total} tasks${x.claimed.length?` <span style="opacity:.7">· 🎁 ${esc(x.claimed.join(", "))}</span>`:""}</div>
-    <div style="font-weight:800;color:${x.percent>=75?"#34d399":"#f5f5f7"}">${x.percent}%</div>
+    <div class="row" style="font-size:13px"><div style="flex:1"><b>${x.date}</b> — ${x.missionsDone!=null?`missions ${x.missionsDone}/3 · M1 ${x.m1Done?"✓":"–"}`:`${x.done}/${x.total} tasks`}${x.bonusPts?` · +${fmtP(x.bonusPts)} bonus`:""}${(x.claimed||[]).length?` <span style="opacity:.7">· 🎁 ${esc(x.claimed.join(", "))}</span>`:""}</div>
+    <div style="font-weight:800;color:${isHit(x)?"#34d399":"#f5f5f7"}">${fmtP(x.percent)}%</div>
     <button class="x-btn" onclick="delHist(${i})">✕</button></div>`).join("")||`<div class="muted">No days finished yet.</div>`;
 }
 function delHist(i){ state.history.splice(i,1); save(); renderStats(); }
 
 /* ================= VIEW MGMT ================= */
 function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
+
 function toggleEl(id,on){ document.getElementById(id).classList.toggle("hidden",!on); }
+
 function show(which){
   ["dump","review","tracker"].forEach(v=>toggleEl("view-"+v, v===which));
 }
+
 function setTab(t){
   curTab = t;
   ["today","banks","stats"].forEach(x=>{
@@ -907,33 +1420,30 @@ function setTab(t){
     if(t==="stats") renderStats();
   }
 }
+
 function renderCarry(){
   const c=document.getElementById("carryCard");
   if(!state.taskBank.length){ c.classList.add("hidden"); return; }
   c.classList.remove("hidden");
-  c.innerHTML=`<div class="card-title">📥 Carried over (${state.taskBank.length})</div>
-    <div class="muted">Unfinished tasks from before — they'll be suggested after you organize.</div>`+
-    state.taskBank.slice(0,5).map(b=>`<div style="font-size:13px;padding:4px 0;opacity:.85">• ${esc(b.label)}</div>`).join("")+
+  c.innerHTML=`<div class="card-title">📥 Task Bank (${state.taskBank.length})</div>`+
+    state.taskBank.slice(0,5).map(b=>`<div style="font-size:13px;padding:4px 0;opacity:.85">• ${esc(dispLabel(b.label))}</div>`).join("")+
     (state.taskBank.length>5?`<div style="font-size:12px;opacity:.5">+${state.taskBank.length-5} more in Banks tab</div>`:"");
 }
 function renderAll(){
   renderCarry();
-  if(state.today&&state.today.tasks.length) renderTracker();
+  if(state.today&&state.today.tasks) renderTracker();
   renderBanks(); renderStats();
 }
 
 /* ================= INIT ================= */
 load();
-if(state.today && state.today.date !== todayStr() && state.today.tasks.length){
-  archiveDay();
-  save();
-}
+if(rolloverIfNeeded()) save();
 renderAll();
 setTab("today");
 initCloudClient();
 renderHeaderCloud();
 pullFromCloud();
-document.addEventListener("visibilitychange", () => { if(!document.hidden){ pullFromCloud(); renderHeaderCloud(); } });
+document.addEventListener("visibilitychange", () => { if(!document.hidden){ pullFromCloud(); renderHeaderCloud(); if(rolloverIfNeeded()){ save(); renderAll(); setTab(curTab); } } });
 </script>
 </body>
 </html>
